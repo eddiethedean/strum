@@ -189,11 +189,23 @@ record2 = Record(info="Bob 25")      # Uses SpaceInfo
 
 Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
 
+### Getting Started
+
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/amazing-feature`)
 3. Commit your changes (`git commit -m 'Add some amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
+
+### Open Issues
+
+Looking for something to work on? Check out our [open issues](https://github.com/eddiethedean/stringent/issues)! We have many enhancement ideas organized by priority:
+
+- **[High Priority Features](https://github.com/eddiethedean/stringent/issues?q=is%3Aissue+is%3Aopen+label%3A%22priority%3A+high%22)** - Core functionality improvements
+- **[Medium Priority Features](https://github.com/eddiethedean/stringent/issues?q=is%3Aissue+is%3Aopen+label%3A%22priority%3A+medium%22)** - Additional capabilities and optimizations
+- **[Documentation & Infrastructure](https://github.com/eddiethedean/stringent/issues?q=is%3Aissue+is%3Aopen+label%3Adocumentation+label%3Ainfrastructure)** - Docs, examples, and tooling improvements
+
+Issues labeled with `good first issue` are great for newcomers. See the full list of [enhancement issues](https://github.com/eddiethedean/stringent/issues?q=is%3Aissue+is%3Aopen+label%3Aenhancement) for more ideas.
 
 ## Development
 
