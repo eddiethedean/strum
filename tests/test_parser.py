@@ -182,6 +182,41 @@ def test_chained_pattern_ror_with_invalid_type():
     assert result is NotImplemented
 
 
+def test_chained_pattern_empty_list():
+    """Test that ChainedParsePattern raises ValueError for empty patterns list."""
+    from stringent.parser import ChainedParsePattern
+
+    with pytest.raises(ValueError, match="requires at least one pattern"):
+        ChainedParsePattern([])
+
+
+def test_parse_pattern_type_error():
+    """Test that ParsePattern.parse raises TypeError for non-string values."""
+    pattern = parse("{name} | {age}")
+
+    with pytest.raises(TypeError, match="Expected string"):
+        pattern.parse(None)
+
+    with pytest.raises(TypeError, match="Expected string"):
+        pattern.parse(123)
+
+    with pytest.raises(TypeError, match="Expected string"):
+        pattern.parse({"name": "Alice"})
+
+
+def test_chained_pattern_type_error():
+    """Test that ChainedParsePattern.parse raises TypeError for non-string values."""
+    pattern1 = parse("{name} | {age}")
+    pattern2 = parse("{name} {age}")
+    chained = pattern1 | pattern2
+
+    with pytest.raises(TypeError, match="Expected string"):
+        chained.parse(None)
+
+    with pytest.raises(TypeError, match="Expected string"):
+        chained.parse(123)
+
+
 def test_parse_pattern_ror_with_valid_type():
     """Test that ParsePattern.__ror__ with valid ParsePattern works correctly."""
     pattern1 = parse("{name}")
