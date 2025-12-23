@@ -20,7 +20,7 @@ class User(JsonParsableModel):
 
 # Automatically parses JSON string
 json_str = '{"name": "Alice", "age": 30, "email": "alice@example.com"}'
-user = User.model_validate(json_str)
+user = User.model_validate(json_str)  # or User.from_json(json_str)
 
 print(user.name)   # Alice
 print(user.age)    # 30
@@ -42,7 +42,15 @@ You can also use the explicit `model_validate_json()` method:
 user = User.model_validate_json(json_str)
 ```
 
-Both methods work identically - `JsonParsableModel` automatically detects JSON strings in `model_validate()`.
+### Using from_json()
+
+For even clearer intent, you can use the `from_json()` convenience method:
+
+```python
+user = User.from_json(json_str)
+```
+
+All three methods (`model_validate()`, `model_validate_json()`, and `from_json()`) work identically - `JsonParsableModel` automatically detects JSON strings in `model_validate()`.
 
 ## Combining with Pattern Parsing
 
@@ -140,7 +148,7 @@ class User(JsonParsableModel):
 
 # Automatically detects JSON
 json_str = '{"name": "Alice", "age": 30}'
-user = User.model_validate(json_str)  # Automatically parses JSON!
+user = User.model_validate(json_str)  # or User.from_json(json_str)
 ```
 
 ## Error Handling

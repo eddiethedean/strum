@@ -197,6 +197,74 @@ record = Record.parse_json(json_str)
 
 **Note:** This method uses Pydantic's `model_validate_json()` internally. You can also use `Record.model_validate_json(json_str)` directly.
 
+### `JsonParsableModel`
+
+A `ParsableModel` subclass that automatically parses JSON strings when instantiated. Extends `ParsableModel` with automatic JSON detection.
+
+#### Class Methods
+
+##### `from_json(json_str: str) -> JsonParsableModel`
+
+Parse a JSON string into a model instance. This is a convenience method that explicitly indicates JSON parsing intent.
+
+**Parameters:**
+- `json_str` (str): JSON string to parse
+
+**Returns:**
+- `JsonParsableModel`: Instance of the model class
+
+**Raises:**
+- `ValidationError`: If the string is not valid JSON or doesn't match the model schema
+
+**Example:**
+```python
+from stringent import JsonParsableModel
+
+class User(JsonParsableModel):
+    name: str
+    age: int
+    email: str
+
+json_str = '{"name": "Alice", "age": 30, "email": "alice@example.com"}'
+user = User.from_json(json_str)
+```
+
+**Note:** This method is equivalent to `User.model_validate(json_str)`. `JsonParsableModel` automatically detects JSON strings in `model_validate()`, so all three methods work identically:
+- `User.model_validate(json_str)`
+- `User.model_validate_json(json_str)`
+- `User.from_json(json_str)`
+
+#### Model Validators
+
+The `JsonParsableModel` class includes a `model_validator` that automatically:
+
+1. Detects JSON strings in the input (strings starting with `{`)
+2. Parses JSON strings into dictionaries before validation
+3. Falls back to parent `ParsableModel` behavior for non-JSON strings
+4. Works seamlessly with field-level parse patterns
+
+This validator runs in `mode="before"`, before the parent class's `_parse_string_fields` validator, so JSON parsing happens at the model level while field-level parsing happens afterward.
+
+**Example:**
+```python
+from stringent import JsonParsableModel, parse
+from pydantic import BaseModel
+
+class Info(BaseModel):
+    name: str
+    age: int
+
+class User(JsonParsableModel):
+    id: int
+    info: Info = parse("{name} | {age}")
+    email: str
+
+# Top-level JSON string is automatically parsed
+# Field-level pattern parsing still works for nested strings
+json_str = '{"id": 1, "info": "Alice | 30", "email": "alice@example.com"}'
+user = User.model_validate(json_str)
+```
+
 #### Model Validators
 
 The `ParsableModel` class includes a `model_validator` that automatically:

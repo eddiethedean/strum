@@ -176,7 +176,7 @@ class ParsableModel(BaseModel):
         dict[str, tuple[ParsePattern | ChainedParsePattern, type[BaseModel]]]
     ] = {}
 
-    def __init_subclass__(cls, **kwargs):
+    def __init_subclass__(cls: type["ParsableModel"], **kwargs: Any) -> None:
         """Automatically set up parse patterns for fields."""
         super().__init_subclass__(**kwargs)
 
@@ -415,7 +415,7 @@ class JsonParsableModel(ParsableModel):
     A ParsableModel that automatically parses JSON strings when instantiated.
 
     This class extends ParsableModel to automatically handle JSON string inputs.
-    Use `model_validate()` or `model_validate_json()` to parse JSON strings.
+    Use `model_validate()`, `model_validate_json()`, or `from_json()` to parse JSON strings.
 
     Example:
         class User(JsonParsableModel):
@@ -435,6 +435,9 @@ class JsonParsableModel(ParsableModel):
 
         # Or use the convenience method
         user4 = User.model_validate_json(json_str)
+
+        # Or use the explicit from_json() method
+        user5 = User.from_json(json_str)
     """
 
     @model_validator(mode="before")
@@ -446,17 +449,52 @@ class JsonParsableModel(ParsableModel):
         This validator runs before the parent class's _parse_string_fields validator,
         so it handles JSON strings at the model level, while the parent handles
         field-level parsing.
+
+        Uses a fast path check (starts with '{') to avoid unnecessary JSON parsing
+        for clearly non-JSON strings.
         """
-        # If data is a JSON string, parse it
+        # Fast path: only attempt JSON parsing if string looks like JSON object
         if isinstance(data, str):
-            try:
-                parsed = json.loads(data)
-                if isinstance(parsed, dict):
-                    return parsed
-            except json.JSONDecodeError:
-                # Not valid JSON, let parent class handle it
-                pass
+            stripped = data.strip()
+            # Quick check: JSON objects start with '{'
+            if stripped.startswith("{"):
+                try:
+                    parsed = json.loads(data)
+                    if isinstance(parsed, dict):
+                        return parsed
+                    # If parsed JSON is not a dict (e.g., array, string, number),
+                    # let Pydantic handle the validation error
+                except json.JSONDecodeError:
+                    # Not valid JSON, let parent class handle it
+                    pass
 
         # For non-strings or non-JSON strings, return as-is
         # The parent class's validator will handle field-level parsing
         return data
+
+    @classmethod
+    def from_json(cls, json_str: str) -> "JsonParsableModel":
+        """
+        Parse a JSON string into a model instance.
+
+        This is a convenience method that explicitly indicates JSON parsing intent.
+        It's equivalent to `model_validate(json_str)` but makes the intent clearer.
+
+        Args:
+            json_str: JSON string to parse
+
+        Returns:
+            Instance of the model class
+
+        Raises:
+            ValidationError: If the string is not valid JSON or doesn't match the model schema
+
+        Example:
+            class User(JsonParsableModel):
+                name: str
+                age: int
+
+            json_str = '{"name": "Alice", "age": 30}'
+            user = User.from_json(json_str)
+        """
+        return cls.model_validate(json_str)

@@ -788,3 +788,281 @@ def test_json_parsable_model_with_nested_parsing():
     assert user.info.age == 30
     assert user.info.city == "NYC"
     assert user.email == "alice@example.com"
+
+
+def test_json_parsable_model_invalid_json_array():
+    """Test that JsonParsableModel rejects JSON arrays."""
+    from stringent import JsonParsableModel
+
+    class User(JsonParsableModel):
+        name: str
+        age: int
+
+    # JSON array should fail (not a dict)
+    with pytest.raises(ValidationError):
+        User.model_validate('[{"name": "Alice", "age": 30}]')
+
+
+def test_json_parsable_model_invalid_json_string():
+    """Test that JsonParsableModel rejects JSON string primitives."""
+    from stringent import JsonParsableModel
+
+    class User(JsonParsableModel):
+        name: str
+        age: int
+
+    # JSON string primitive should fail
+    with pytest.raises(ValidationError):
+        User.model_validate('"just a string"')
+
+    # JSON number should fail
+    with pytest.raises(ValidationError):
+        User.model_validate("42")
+
+    # JSON boolean should fail
+    with pytest.raises(ValidationError):
+        User.model_validate("true")
+
+    # JSON null should fail
+    with pytest.raises(ValidationError):
+        User.model_validate("null")
+
+
+def test_json_parsable_model_malformed_json():
+    """Test that JsonParsableModel handles malformed JSON gracefully."""
+    from stringent import JsonParsableModel
+
+    class User(JsonParsableModel):
+        name: str
+        age: int
+
+    # Missing closing brace
+    with pytest.raises(ValidationError):
+        User.model_validate('{"name": "Alice", "age": 30')
+
+    # Invalid JSON syntax
+    with pytest.raises(ValidationError):
+        User.model_validate('{"name": "Alice", age: 30}')
+
+
+def test_json_parsable_model_empty_string():
+    """Test that JsonParsableModel handles empty strings."""
+    from stringent import JsonParsableModel
+
+    class User(JsonParsableModel):
+        name: str
+        age: int
+
+    # Empty string should fail (not valid JSON)
+    with pytest.raises(ValidationError):
+        User.model_validate("")
+
+
+def test_json_parsable_model_whitespace_string():
+    """Test that JsonParsableModel handles whitespace-only strings."""
+    from stringent import JsonParsableModel
+
+    class User(JsonParsableModel):
+        name: str
+        age: int
+
+    # Whitespace-only string should fail (not valid JSON)
+    with pytest.raises(ValidationError):
+        User.model_validate("   ")
+
+
+def test_json_parsable_model_with_parse_json_field():
+    """Test that JsonParsableModel works with parse_json() field pattern."""
+    from pydantic import BaseModel
+
+    from stringent import JsonParsableModel, parse_json
+
+    class Info(BaseModel):
+        name: str
+        age: int
+
+    class User(JsonParsableModel):
+        id: int
+        info: Info = parse_json()
+        email: str
+
+    # Top-level JSON with nested JSON string field
+    json_str = (
+        '{"id": 1, "info": "{\\"name\\": \\"Alice\\", \\"age\\": 30}", '
+        '"email": "alice@example.com"}'
+    )
+    user = User.model_validate(json_str)
+    assert user.id == 1
+    assert user.info.name == "Alice"
+    assert user.info.age == 30
+    assert user.email == "alice@example.com"
+
+
+def test_json_parsable_model_with_chained_parse_json():
+    """Test that JsonParsableModel works with chained patterns including parse_json()."""
+    from pydantic import BaseModel
+
+    from stringent import JsonParsableModel, parse, parse_json
+
+    class Info(BaseModel):
+        name: str
+        age: int
+        city: str
+
+    class User(JsonParsableModel):
+        id: int
+        info: Info = parse_json() | parse("{name} | {age} | {city}")
+        email: str
+
+    # Test with JSON string in field (should use parse_json())
+    json_str = (
+        '{"id": 1, "info": "{\\"name\\": \\"Alice\\", \\"age\\": 30, '
+        '\\"city\\": \\"NYC\\"}", "email": "alice@example.com"}'
+    )
+    user1 = User.model_validate(json_str)
+    assert user1.info.name == "Alice"
+    assert user1.info.age == 30
+    assert user1.info.city == "NYC"
+
+    # Test with pattern string in field (should use parse())
+    json_str2 = '{"id": 2, "info": "Bob | 25 | Chicago", "email": "bob@example.com"}'
+    user2 = User.model_validate(json_str2)
+    assert user2.info.name == "Bob"
+    assert user2.info.age == 25
+    assert user2.info.city == "Chicago"
+
+
+def test_json_parsable_model_inheritance():
+    """Test that JsonParsableModel inheritance works correctly."""
+    from stringent import JsonParsableModel
+
+    class BaseUser(JsonParsableModel):
+        name: str
+        age: int
+
+    class DerivedUser(BaseUser):
+        email: str
+
+    # Should work with JSON string
+    json_str = '{"name": "Alice", "age": 30, "email": "alice@example.com"}'
+    user = DerivedUser.model_validate(json_str)
+    assert user.name == "Alice"
+    assert user.age == 30
+    assert user.email == "alice@example.com"
+
+
+def test_json_parsable_model_with_union_types():
+    """Test that JsonParsableModel works with union types."""
+    from stringent import JsonParsableModel
+
+    class JsonUser(JsonParsableModel):
+        name: str
+        age: int
+
+    class PatternUser(ParsableModel):
+        _model_parse_pattern = "{name} | {age}"
+        name: str
+        age: int
+
+    class Record(ParsableModel):
+        id: int
+        user: JsonUser | PatternUser
+
+    # Test with JSON string (should use JsonUser)
+    data = {"id": 1, "user": '{"name": "Alice", "age": 30}'}
+    record = Record(**data)
+    assert isinstance(record.user, JsonUser)
+    assert record.user.name == "Alice"
+    assert record.user.age == 30
+
+    # Test with pattern string (should use PatternUser)
+    data2 = {"id": 2, "user": "Bob | 25"}
+    record2 = Record(**data2)
+    assert isinstance(record2.user, PatternUser)
+    assert record2.user.name == "Bob"
+    assert record2.user.age == 25
+
+
+def test_json_parsable_model_with_model_parse_pattern():
+    """Test that JsonParsableModel works with _model_parse_pattern (should prioritize JSON)."""
+    from stringent import JsonParsableModel
+
+    class User(JsonParsableModel):
+        _model_parse_pattern = "{name} | {age}"
+        name: str
+        age: int
+
+    # JSON string should be parsed as JSON (not pattern)
+    json_str = '{"name": "Alice", "age": 30}'
+    user = User.model_validate(json_str)
+    assert user.name == "Alice"
+    assert user.age == 30
+
+    # Pattern string should still work via model_validate with dict
+    # (but not as string since JsonParsableModel intercepts strings as JSON)
+    user2 = User.model_validate({"name": "Bob", "age": 25})
+    assert user2.name == "Bob"
+    assert user2.age == 25
+
+
+def test_json_parsable_model_non_json_string_fallback():
+    """Test that JsonParsableModel falls back gracefully for non-JSON strings."""
+    from pydantic import BaseModel
+
+    from stringent import JsonParsableModel, parse
+
+    class Info(BaseModel):
+        name: str
+        age: int
+
+    class User(JsonParsableModel):
+        id: int
+        info: Info = parse("{name} | {age}")
+        email: str
+
+    # Non-JSON string at top level should fail (not a dict)
+    # But field-level parsing should still work if we pass a dict
+    data = {"id": 1, "info": "Alice | 30", "email": "alice@example.com"}
+    user = User.model_validate(data)
+    assert user.info.name == "Alice"
+    assert user.info.age == 30
+
+
+def test_json_parsable_model_from_json_method():
+    """Test the from_json() convenience method."""
+    from stringent import JsonParsableModel
+
+    class User(JsonParsableModel):
+        name: str
+        age: int
+        email: str
+
+    json_str = '{"name": "Alice", "age": 30, "email": "alice@example.com"}'
+    user = User.from_json(json_str)
+    assert user.name == "Alice"
+    assert user.age == 30
+    assert user.email == "alice@example.com"
+
+    # Should be equivalent to model_validate
+    user2 = User.model_validate(json_str)
+    assert user.name == user2.name
+    assert user.age == user2.age
+    assert user.email == user2.email
+
+
+def test_json_parsable_model_fast_path_check():
+    """Test that JsonParsableModel uses fast path for non-JSON strings."""
+    from stringent import JsonParsableModel
+
+    class User(JsonParsableModel):
+        name: str
+        age: int
+
+    # String that doesn't start with '{' should not attempt JSON parsing
+    # This should fail with ValidationError (not JSONDecodeError)
+    with pytest.raises(ValidationError):
+        User.model_validate("not a json string")
+
+    # String that starts with '{' but isn't valid JSON should fail gracefully
+    with pytest.raises(ValidationError):
+        User.model_validate("{invalid json")
