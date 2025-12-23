@@ -60,6 +60,13 @@ class ChainedParsePattern:
     """A chain of patterns that will be tried in order."""
 
     def __init__(self, patterns: list[ParsePattern]):
+        # Validate that all patterns are ParsePattern instances
+        for i, pattern in enumerate(patterns):
+            if not isinstance(pattern, ParsePattern):
+                raise TypeError(
+                    f"All patterns must be ParsePattern instances, "
+                    f"but got {type(pattern).__name__} at index {i}"
+                )
         self.patterns = patterns
 
     def parse(self, value: str) -> dict[str, Any]:

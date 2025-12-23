@@ -1,6 +1,27 @@
 # strum
 
-Parse strings into Pydantic models using pattern matching.
+[![CI](https://github.com/eddiethedean/strum/actions/workflows/ci.yml/badge.svg)](https://github.com/eddiethedean/strum/actions/workflows/ci.yml)
+[![Python Version](https://img.shields.io/pypi/pyversions/strum.svg)](https://pypi.org/project/strum/)
+[![License](https://img.shields.io/pypi/l/strum.svg)](https://github.com/eddiethedean/strum/blob/main/LICENSE)
+[![Code style: ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+
+**strum** is a powerful Python library that seamlessly parses strings into Pydantic models using flexible pattern matching. Whether you're working with pipe-separated values, space-separated data, JSON strings, or custom formats, strum makes it easy to convert unstructured strings into validated, type-safe Python objects.
+
+## Features
+
+✨ **Flexible Pattern Matching** - Parse strings using format-like patterns (e.g., `{name} | {age} | {city}`)
+
+🔗 **Pattern Chaining** - Chain multiple patterns using the `|` operator to try patterns in order until one matches
+
+🔄 **Automatic Input Handling** - Seamlessly handles both dictionary and string inputs without code changes
+
+🎯 **Pydantic Integration** - Built on Pydantic 2.0+ for robust validation and type safety
+
+📦 **JSON Support** - Built-in JSON parsing with automatic fallback to pattern matching
+
+🔀 **Union Types** - Organize parsing strategies using union types for maximum flexibility
+
+🧬 **Inheritance Support** - Parse patterns are inherited and can be overridden in subclasses
 
 ## Installation
 
@@ -47,15 +68,23 @@ id=5 info=Info(name='Eve', age=35, city='Dallas') email='eve@example.com' status
 id=8 info=Info(name='Joe', age=55, city='Tampa') email='joe@example.com' status='Active'
 ```
 
-## Features
+## Why strum?
 
-- Parse strings using format-like patterns (e.g., `{name} | {age} | {city}`)
-- Chain multiple patterns using the `|` operator to try patterns in order
-- Automatically handles both dictionary and string inputs
-- Integrates seamlessly with Pydantic models
-- Supports flexible spacing in patterns
-- Union types for organizing parsing strategies
-- JSON parsing support
+Working with mixed data formats is a common challenge in data processing. You might receive:
+- Dictionary objects from APIs
+- Pipe-separated strings from legacy systems
+- Space-separated values from log files
+- JSON strings from message queues
+
+**strum** eliminates the need for manual parsing logic by automatically handling all these formats with a single, declarative definition.
+
+## Key Use Cases
+
+- **API Integration** - Handle inconsistent data formats from different endpoints
+- **Data Migration** - Parse legacy data formats while maintaining type safety
+- **Log Processing** - Parse structured log entries into validated models
+- **ETL Pipelines** - Transform unstructured strings into typed data structures
+- **Configuration Parsing** - Support multiple configuration formats with fallback patterns
 
 ## Documentation
 
@@ -69,15 +98,140 @@ Comprehensive documentation is available in the [docs directory](https://github.
 
 ## Requirements
 
-- Python 3.10+
-- Pydantic 2.0+
-- parse 1.20+
+- **Python** 3.10 or higher
+- **Pydantic** 2.0 or higher
+- **parse** 1.20 or higher
 
 ## Dependencies
 
-- `pydantic>=2.0.0` - For Pydantic model integration
+- `pydantic>=2.0.0` - For Pydantic model integration and validation
 - `parse>=1.20.0` - For string parsing functionality
+
+## Examples
+
+### Pattern Chaining
+
+Try multiple patterns in order until one matches:
+
+```python
+from strum import parse, ParsableModel
+from pydantic import BaseModel
+
+class Info(BaseModel):
+    name: str
+    age: int
+    city: str
+
+class Record(ParsableModel):
+    info: Info = parse('{name} | {age} | {city}') | parse('{name} {age} {city}')
+
+# Both formats work automatically
+record1 = Record(info="Alice | 30 | NYC")
+record2 = Record(info="Bob 25 Chicago")
+```
+
+### JSON Parsing
+
+Automatically parse JSON strings with fallback to pattern matching:
+
+```python
+from strum import parse_json, parse, ParsableModel
+from pydantic import BaseModel
+
+class Info(BaseModel):
+    name: str
+    age: int
+
+class Record(ParsableModel):
+    info: Info = parse_json() | parse('{name} | {age}')
+
+# JSON string
+record1 = Record(info='{"name": "Alice", "age": 30}')
+
+# Pattern string (fallback)
+record2 = Record(info="Bob | 25")
+```
+
+### Union Types
+
+Use union types to organize parsing strategies:
+
+```python
+from typing import Union
+from strum import ParsableModel
+from pydantic import BaseModel
+
+class Info(ParsableModel):
+    name: str
+    age: int
+
+class PipeInfo(Info):
+    _model_parse_pattern = '{name} | {age}'
+
+class SpaceInfo(Info):
+    _model_parse_pattern = '{name} {age}'
+
+class Record(ParsableModel):
+    info: Union[PipeInfo, SpaceInfo]
+
+# Automatically selects the correct type
+record1 = Record(info="Alice | 30")  # Uses PipeInfo
+record2 = Record(info="Bob 25")      # Uses SpaceInfo
+```
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## Development
+
+To set up a development environment:
+
+```bash
+# Clone the repository
+git clone https://github.com/eddiethedean/strum.git
+cd strum
+
+# Create a virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install -e ".[dev]"
+
+# Run tests
+pytest
+
+# Run linting
+ruff check .
+ruff format .
+
+# Run type checking
+mypy strum/
+```
 
 ## License
 
-MIT
+This project is licensed under the MIT License - see the [LICENSE](https://github.com/eddiethedean/strum/blob/main/LICENSE) file for details.
+
+## Author
+
+**Odos Matthews**
+
+- GitHub: [@eddiethedean](https://github.com/eddiethedean)
+- Email: odosmatthews@gmail.com
+
+## Acknowledgments
+
+- Built on [Pydantic](https://pydantic.dev/) for robust data validation
+- Uses [parse](https://github.com/r1chardj0n3s/parse) for flexible string parsing
+
+---
+
+**Made with ❤️ for the Python community**
