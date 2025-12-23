@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/eddiethedean/stringent/actions/workflows/ci.yml/badge.svg)](https://github.com/eddiethedean/stringent/actions/workflows/ci.yml)
 [![Python Version](https://img.shields.io/pypi/pyversions/stringent.svg)](https://pypi.org/project/stringent/)
-[![License](https://img.shields.io/pypi/l/stringent.svg)](https://github.com/eddiethedean/stringent/blob/main/LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/eddiethedean/stringent/blob/main/LICENSE)
 [![Code style: ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
 **stringent** is a powerful Python library that seamlessly parses strings into Pydantic models using flexible pattern matching. Whether you're working with pipe-separated values, space-separated data, JSON strings, or custom formats, stringent makes it easy to convert unstructured strings into validated, type-safe Python objects.
