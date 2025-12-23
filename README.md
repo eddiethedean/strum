@@ -10,17 +10,12 @@
 ## Features
 
 ✨ **Flexible Pattern Matching** - Parse strings using format-like patterns (e.g., `{name} | {age} | {city}`)
-
 🔗 **Pattern Chaining** - Chain multiple patterns using the `|` operator to try patterns in order until one matches
-
 🔄 **Automatic Input Handling** - Seamlessly handles both dictionary and string inputs without code changes
-
 🎯 **Pydantic Integration** - Built on Pydantic 2.0+ for robust validation and type safety
-
 📦 **JSON Support** - Built-in JSON parsing with automatic fallback to pattern matching
-
+🚀 **JsonParsableModel** - Automatic JSON string parsing for API integrations and message queues
 🔀 **Union Types** - Organize parsing strategies using union types for maximum flexibility
-
 🧬 **Inheritance Support** - Parse patterns are inherited and can be overridden in subclasses
 
 ## Installation
@@ -92,6 +87,7 @@ Comprehensive documentation is available in the [docs directory](https://github.
 
 - **[Getting Started](https://github.com/eddiethedean/stringent/blob/main/docs/getting-started.md)** - Installation and basic concepts
 - **[Basic Usage](https://github.com/eddiethedean/stringent/blob/main/docs/basic-usage.md)** - Field-level parsing, pattern chaining, and common patterns
+- **[JSON Parsing](https://github.com/eddiethedean/stringent/blob/main/docs/json-parsing.md)** - Automatic JSON parsing with JsonParsableModel
 - **[Advanced Patterns](https://github.com/eddiethedean/stringent/blob/main/docs/advanced-patterns.md)** - Union types, inheritance, and complex scenarios
 - **[API Reference](https://github.com/eddiethedean/stringent/blob/main/docs/api-reference.md)** - Complete API documentation
 - **[Documentation Index](https://github.com/eddiethedean/stringent/blob/main/docs/index.md)** - Overview and quick links

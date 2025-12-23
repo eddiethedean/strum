@@ -42,6 +42,7 @@ Alice
 
 - **[Getting Started](getting-started.md)** - Installation and basic concepts
 - **[Basic Usage](basic-usage.md)** - Field-level parsing, pattern chaining, and common patterns
+- **[JSON Parsing](json-parsing.md)** - Automatic JSON parsing with JsonParsableModel
 - **[Advanced Patterns](advanced-patterns.md)** - Union types, inheritance, and complex scenarios
 - **[API Reference](api-reference.md)** - Complete API documentation
 
@@ -85,6 +86,22 @@ Parse JSON strings alongside format patterns:
 ```python
 class Record(ParsableModel):
     info: Info = parse_json() | parse('{name} | {age} | {city}')
+```
+
+### JsonParsableModel
+
+Automatic JSON string parsing for models:
+
+```python
+from stringent import JsonParsableModel
+
+class User(JsonParsableModel):
+    name: str
+    age: int
+
+# Automatically parses JSON strings
+json_str = '{"name": "Alice", "age": 30}'
+user = User.model_validate(json_str)
 ```
 
 ## Examples

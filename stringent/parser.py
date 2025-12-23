@@ -408,3 +408,55 @@ class ParsableModel(BaseModel):
         # Use Pydantic's built-in JSON parsing
         # The _parse_string_fields validator will handle any nested string parsing
         return cls.model_validate_json(value)
+
+
+class JsonParsableModel(ParsableModel):
+    """
+    A ParsableModel that automatically parses JSON strings when instantiated.
+
+    This class extends ParsableModel to automatically handle JSON string inputs.
+    Use `model_validate()` or `model_validate_json()` to parse JSON strings.
+
+    Example:
+        class User(JsonParsableModel):
+            name: str
+            age: int
+            email: str
+
+        # Works with kwargs
+        user1 = User(name="Alice", age=30, email="alice@example.com")
+
+        # Works with JSON string - automatically parsed!
+        json_str = '{"name": "Bob", "age": 25, "email": "bob@example.com"}'
+        user2 = User.model_validate(json_str)  # Automatically detects and parses JSON
+
+        # Also works with dict
+        user3 = User.model_validate({"name": "Charlie", "age": 35, "email": "charlie@example.com"})
+
+        # Or use the convenience method
+        user4 = User.model_validate_json(json_str)
+    """
+
+    @model_validator(mode="before")
+    @classmethod
+    def _auto_parse_json(cls, data: Any) -> Any:
+        """
+        Automatically parse JSON strings if the input is a string.
+
+        This validator runs before the parent class's _parse_string_fields validator,
+        so it handles JSON strings at the model level, while the parent handles
+        field-level parsing.
+        """
+        # If data is a JSON string, parse it
+        if isinstance(data, str):
+            try:
+                parsed = json.loads(data)
+                if isinstance(parsed, dict):
+                    return parsed
+            except json.JSONDecodeError:
+                # Not valid JSON, let parent class handle it
+                pass
+
+        # For non-strings or non-JSON strings, return as-is
+        # The parent class's validator will handle field-level parsing
+        return data

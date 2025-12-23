@@ -725,3 +725,66 @@ def test_union_type_with_dict_input():
     assert record.info.name == "Alice"
     assert record.info.age == 30
     assert record.info.city == "NYC"
+
+
+def test_json_parsable_model_auto_parse():
+    """Test that JsonParsableModel automatically parses JSON strings."""
+
+    from stringent import JsonParsableModel
+
+    class User(JsonParsableModel):
+        name: str
+        age: int
+        email: str
+
+    # Test with JSON string via model_validate
+    json_str = '{"name": "Alice", "age": 30, "email": "alice@example.com"}'
+    user1 = User.model_validate(json_str)
+    assert user1.name == "Alice"
+    assert user1.age == 30
+    assert user1.email == "alice@example.com"
+
+    # Test with model_validate_json
+    user2 = User.model_validate_json(json_str)
+    assert user2.name == "Alice"
+    assert user2.age == 30
+    assert user2.email == "alice@example.com"
+
+    # Test with dict (should still work)
+    user3 = User.model_validate({"name": "Bob", "age": 25, "email": "bob@example.com"})
+    assert user3.name == "Bob"
+    assert user3.age == 25
+    assert user3.email == "bob@example.com"
+
+    # Test with kwargs (normal Pydantic behavior)
+    user4 = User(name="Charlie", age=35, email="charlie@example.com")
+    assert user4.name == "Charlie"
+    assert user4.age == 35
+    assert user4.email == "charlie@example.com"
+
+
+def test_json_parsable_model_with_nested_parsing():
+    """Test that JsonParsableModel works with nested parse patterns."""
+
+    from pydantic import BaseModel
+
+    from stringent import JsonParsableModel, parse
+
+    class Info(BaseModel):
+        name: str
+        age: int
+        city: str
+
+    class User(JsonParsableModel):
+        id: int
+        info: Info = parse("{name} | {age} | {city}")
+        email: str
+
+    # JSON string with nested string that needs parsing
+    json_str = '{"id": 1, "info": "Alice | 30 | NYC", "email": "alice@example.com"}'
+    user = User.model_validate(json_str)
+    assert user.id == 1
+    assert user.info.name == "Alice"
+    assert user.info.age == 30
+    assert user.info.city == "NYC"
+    assert user.email == "alice@example.com"
