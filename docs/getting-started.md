@@ -12,7 +12,7 @@ pip install strum
 
 ## Requirements
 
-- Python 3.8 or higher
+- Python 3.10 or higher
 - Pydantic 2.0 or higher
 - parse 1.20 or higher
 
@@ -42,8 +42,14 @@ data = {
 }
 
 record = Record(**data)
-print(record.info.name)  # Output: Alice
-print(record.info.age)   # Output: 30
+print(record.info.name)
+print(record.info.age)
+```
+
+**Output:**
+```
+Alice
+30
 ```
 
 ## Key Concepts

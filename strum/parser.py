@@ -3,9 +3,10 @@
 import json
 import sys
 import types
-from typing import Any, Dict, List, Union, get_args, get_origin
+from typing import Any, ClassVar, Union, get_args, get_origin
+
 import parse as parse_lib
-from pydantic import BaseModel, model_validator, ValidationError
+from pydantic import BaseModel, ValidationError, model_validator
 
 
 class ParsePattern:
@@ -22,7 +23,7 @@ class ParsePattern:
         # Compile the pattern using the parse library
         self.compiled_pattern = parse_lib.compile(pattern)
 
-    def parse(self, value: str) -> Dict[str, Any]:
+    def parse(self, value: str) -> dict[str, Any]:
         """
         Parse a string value according to the pattern.
 
@@ -37,14 +38,10 @@ class ParsePattern:
         """
         result = self.compiled_pattern.parse(value.strip())
         if result is None:
-            raise ValueError(
-                f"String '{value}' does not match pattern '{self.pattern}'"
-            )
+            raise ValueError(f"String '{value}' does not match pattern '{self.pattern}'")
 
         # Convert ParseResult to dictionary and strip whitespace from values
-        return {
-            k: v.strip() if isinstance(v, str) else v for k, v in result.named.items()
-        }
+        return {k: v.strip() if isinstance(v, str) else v for k, v in result.named.items()}
 
     def __or__(self, other: "ParsePattern") -> "ChainedParsePattern":
         """Support | operator for chaining patterns."""
@@ -62,10 +59,10 @@ class ParsePattern:
 class ChainedParsePattern:
     """A chain of patterns that will be tried in order."""
 
-    def __init__(self, patterns: List[ParsePattern]):
+    def __init__(self, patterns: list[ParsePattern]):
         self.patterns = patterns
 
-    def parse(self, value: str) -> Dict[str, Any]:
+    def parse(self, value: str) -> dict[str, Any]:
         """
         Try each pattern in order until one succeeds.
 
@@ -86,12 +83,10 @@ class ChainedParsePattern:
 
         raise ValueError(f"String '{value}' did not match any pattern")
 
-    def __or__(
-        self, other: Union[ParsePattern, "ChainedParsePattern"]
-    ) -> "ChainedParsePattern":
+    def __or__(self, other: Union[ParsePattern, "ChainedParsePattern"]) -> "ChainedParsePattern":
         """Support chaining more patterns."""
         if isinstance(other, ParsePattern):
-            return ChainedParsePattern(self.patterns + [other])
+            return ChainedParsePattern([*self.patterns, other])
         elif isinstance(other, ChainedParsePattern):
             return ChainedParsePattern(self.patterns + other.patterns)
         return NotImplemented
@@ -99,7 +94,7 @@ class ChainedParsePattern:
     def __ror__(self, other: Any) -> "ChainedParsePattern":
         """Support | operator when chain is on the right side."""
         if isinstance(other, ParsePattern):
-            return ChainedParsePattern([other] + self.patterns)
+            return ChainedParsePattern([other, *self.patterns])
         elif isinstance(other, ChainedParsePattern):
             return ChainedParsePattern(other.patterns + self.patterns)
         return NotImplemented
@@ -111,9 +106,9 @@ class JsonParsePattern(ParsePattern):
     def __init__(self) -> None:
         # Use a placeholder pattern name; no compiled pattern is needed for JSON
         self.pattern = "<json>"
-        self.compiled_pattern = None  # type: ignore[assignment]
+        self.compiled_pattern: Any = None
 
-    def parse(self, value: str) -> Dict[str, Any]:
+    def parse(self, value: str) -> dict[str, Any]:
         """
         Parse a JSON string into a dictionary.
 
@@ -170,6 +165,10 @@ def parse_json() -> ParsePattern:
 class ParsableModel(BaseModel):
     """Base model class that supports parse patterns in field definitions."""
 
+    _parse_patterns: ClassVar[
+        dict[str, tuple[ParsePattern | ChainedParsePattern, type[BaseModel]]]
+    ] = {}
+
     def __init_subclass__(cls, **kwargs):
         """Automatically set up parse patterns for fields."""
         super().__init_subclass__(**kwargs)
@@ -184,7 +183,7 @@ class ParsableModel(BaseModel):
         annotations = getattr(cls, "__annotations__", {})
 
         # Check class attributes for parse patterns
-        for field_name in annotations.keys():
+        for field_name in annotations:
             if hasattr(cls, field_name):
                 default_value = getattr(cls, field_name)
                 if isinstance(default_value, (ParsePattern, ChainedParsePattern)):
@@ -195,11 +194,12 @@ class ParsableModel(BaseModel):
                         and issubclass(field_type, BaseModel)
                     ):
                         cls._parse_patterns[field_name] = (default_value, field_type)
-                        # Remove the parse pattern from class attributes so it doesn't become a default
+                        # Remove parse pattern from class attributes
+                        # so it doesn't become a default
                         delattr(cls, field_name)
 
     @staticmethod
-    def _extract_parsable_union_types(field_type: Any) -> List[type]:
+    def _extract_parsable_union_types(field_type: Any) -> list[type]:
         """
         Extract ParsableModel subclasses from a union type.
 
@@ -208,24 +208,24 @@ class ParsableModel(BaseModel):
         """
         # Handle Python 3.10+ union syntax (A | B)
         origin = get_origin(field_type)
-        if origin is Union or (sys.version_info >= (3, 10) and hasattr(types, 'UnionType') and origin is types.UnionType):
+        if origin is Union or (
+            sys.version_info >= (3, 10)
+            and hasattr(types, "UnionType")
+            and origin is types.UnionType
+        ):
             args = get_args(field_type)
-            return [
-                arg for arg in args
-                if isinstance(arg, type) and issubclass(arg, ParsableModel)
-            ]
+            return [arg for arg in args if isinstance(arg, type) and issubclass(arg, ParsableModel)]
         # Fallback: check if it has __args__ directly (for older Python versions or custom types)
         if hasattr(field_type, "__args__"):
             args = field_type.__args__
             if len(args) > 1:
                 return [
-                    arg for arg in args
-                    if isinstance(arg, type) and issubclass(arg, ParsableModel)
+                    arg for arg in args if isinstance(arg, type) and issubclass(arg, ParsableModel)
                 ]
         return []
 
     @classmethod
-    def _try_parse_with_subclass(cls, subclass: type, value: str) -> Any:
+    def _try_parse_with_subclass(cls, subclass: type[BaseModel], value: str) -> BaseModel | None:
         """
         Try to parse a string value using a ParsableModel subclass's configuration.
 
@@ -237,7 +237,7 @@ class ParsableModel(BaseModel):
             Parsed model instance if successful, None otherwise
         """
         if not isinstance(value, str):
-            return None
+            return None  # type: ignore[unreachable]
 
         # Check for _json_parse flag
         if getattr(subclass, "_json_parse", False):
@@ -250,14 +250,21 @@ class ParsableModel(BaseModel):
 
         # Check for _model_parse_pattern
         if hasattr(subclass, "_model_parse_pattern"):
-            attr = getattr(subclass, "_model_parse_pattern")
-            pattern = attr.default if hasattr(attr, "default") else (attr if isinstance(attr, str) else None)
+            attr = subclass._model_parse_pattern
+            pattern = (
+                attr.default
+                if hasattr(attr, "default")
+                else (attr if isinstance(attr, str) else None)
+            )
             if pattern:
                 try:
-                    return subclass.parse(value, pattern=pattern)
+                    # Type check: subclass should be ParsableModel
+                    if issubclass(subclass, ParsableModel):
+                        return subclass.parse(value, pattern=pattern)
                 except (ValueError, ValidationError):
                     pass
 
+        # All parsing attempts failed
         return None
 
     @model_validator(mode="before")
@@ -272,7 +279,7 @@ class ParsableModel(BaseModel):
 
         # First, handle existing parse patterns (backward compatibility)
         if hasattr(cls, "_parse_patterns"):
-            for field_name, (pattern_obj, target_type) in cls._parse_patterns.items():
+            for field_name, (pattern_obj, _target_type) in cls._parse_patterns.items():
                 if field_name in result:
                     value = result[field_name]
                     if isinstance(value, str):
@@ -297,10 +304,7 @@ class ParsableModel(BaseModel):
                                 result[field_name] = parsed
                                 break
                     # Also handle single ParsableModel subclass with parsing config
-                    elif (
-                        isinstance(field_type, type)
-                        and issubclass(field_type, ParsableModel)
-                    ):
+                    elif isinstance(field_type, type) and issubclass(field_type, ParsableModel):
                         parsed = cls._try_parse_with_subclass(field_type, value)
                         if parsed is not None:
                             result[field_name] = parsed
@@ -308,7 +312,7 @@ class ParsableModel(BaseModel):
         return result
 
     @classmethod
-    def parse(cls, value: str, pattern: str = None) -> "ParsableModel":
+    def parse(cls, value: str, pattern: str | None = None) -> "ParsableModel":
         """
         Parse a string into a model instance.
 
@@ -337,7 +341,7 @@ class ParsableModel(BaseModel):
         if pattern is None:
             # Get _model_parse_pattern - Pydantic wraps it in ModelPrivateAttr
             if hasattr(cls, "_model_parse_pattern"):
-                attr = getattr(cls, "_model_parse_pattern")
+                attr = cls._model_parse_pattern
                 # Handle Pydantic's ModelPrivateAttr wrapper
                 if hasattr(attr, "default"):
                     pattern = attr.default
@@ -350,8 +354,10 @@ class ParsableModel(BaseModel):
 
             if pattern is None:
                 raise ValueError(
-                    f"No parse pattern provided and {cls.__name__}._model_parse_pattern is not defined. "
-                    "Either provide a pattern argument or define _model_parse_pattern on the class."
+                    f"No parse pattern provided and "
+                    f"{cls.__name__}._model_parse_pattern is not defined. "
+                    "Either provide a pattern argument or define "
+                    "_model_parse_pattern on the class."
                 )
 
         # Parse the string using the pattern
@@ -387,7 +393,7 @@ class ParsableModel(BaseModel):
 
             json_str = '{"id": 1, "info": "Alice | 30 | NYC", "email": "alice@example.com"}'
             record = Record.parse_json(json_str)
-            
+
         Note:
             This method uses Pydantic's `model_validate_json()` internally.
             You can also use `Record.model_validate_json(json_str)` directly.

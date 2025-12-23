@@ -30,7 +30,12 @@ class Record(ParsableModel):
 # Parse a string into the nested model
 data = {"id": 1, "info": "Alice | 30 | NYC", "email": "alice@example.com"}
 record = Record(**data)
-print(record.info.name)  # Output: Alice
+print(record.info.name)
+```
+
+**Output:**
+```
+Alice
 ```
 
 ## Documentation
@@ -88,7 +93,7 @@ See the [Basic Usage Guide](basic-usage.md) for detailed examples, or check out 
 
 ## Requirements
 
-- Python 3.8+
+- Python 3.10+
 - Pydantic 2.0+
 - parse 1.20+
 

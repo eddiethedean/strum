@@ -1,9 +1,11 @@
 """Tests for the parser functionality."""
 
+from typing import Literal
+
 import pytest
 from pydantic import BaseModel, EmailStr, ValidationError
-from typing import Literal, Union
-from strum import parse, parse_json, ParsableModel
+
+from strum import ParsableModel, parse, parse_json
 
 
 class Info(BaseModel):
@@ -105,9 +107,7 @@ def test_json_parse_pattern_chained_in_model_field():
 
     class RecordWithJsonInfo(ParsableModel):
         id: int
-        info: Info = parse_json() | parse("{name} | {age} | {city}") | parse(
-            "{name} {age} {city}"
-        )
+        info: Info = parse_json() | parse("{name} | {age} | {city}") | parse("{name} {age} {city}")
         email: EmailStr
         status: Literal["Active", "Inactive"]
 
@@ -352,6 +352,7 @@ def test_parse_with_non_string_values():
 
 def test_parse_pattern_inheritance():
     """Test that parse patterns are inherited from parent classes."""
+
     class BaseRecord(ParsableModel):
         info: Info = parse("{name} | {age} | {city}")
 
@@ -373,6 +374,7 @@ def test_parse_pattern_inheritance():
 
 def test_parse_pattern_override():
     """Test that child classes can override parent parse patterns."""
+
     class BaseRecord(ParsableModel):
         info: Info = parse("{name} | {age} | {city}")
 
@@ -396,6 +398,7 @@ def test_parse_pattern_override():
 
 def test_parsable_model_parse_with_pattern():
     """Test that ParsableModel.parse() works with a provided pattern."""
+
     class SimpleRecord(ParsableModel):
         id: int
         name: str
@@ -410,6 +413,7 @@ def test_parsable_model_parse_with_pattern():
 
 def test_parsable_model_parse_with_class_pattern():
     """Test that ParsableModel.parse() works with _model_parse_pattern class attribute."""
+
     class SimpleRecord(ParsableModel):
         _model_parse_pattern = "{id} | {name} | {age}"
         id: int
@@ -425,6 +429,7 @@ def test_parsable_model_parse_with_class_pattern():
 
 def test_parsable_model_parse_with_nested_parsing():
     """Test that ParsableModel.parse() works with nested parse patterns."""
+
     class RecordWithNested(ParsableModel):
         # Use a different delimiter for the outer pattern to avoid conflicts
         _model_parse_pattern = "{id} || {info} || {email}"
@@ -444,6 +449,7 @@ def test_parsable_model_parse_with_nested_parsing():
 
 def test_parsable_model_parse_no_pattern_error():
     """Test that ParsableModel.parse() raises error when no pattern is provided."""
+
     class SimpleRecord(ParsableModel):
         id: int
         name: str
@@ -455,6 +461,7 @@ def test_parsable_model_parse_no_pattern_error():
 
 def test_parsable_model_parse_invalid_string():
     """Test that ParsableModel.parse() raises error when string doesn't match pattern."""
+
     class SimpleRecord(ParsableModel):
         _model_parse_pattern = "{id} | {name} | {age}"
         id: int
@@ -468,6 +475,7 @@ def test_parsable_model_parse_invalid_string():
 
 def test_parsable_model_parse_json():
     """Test that ParsableModel.parse_json() works with JSON strings."""
+
     class SimpleRecord(ParsableModel):
         id: int
         name: str
@@ -482,6 +490,7 @@ def test_parsable_model_parse_json():
 
 def test_parsable_model_parse_json_with_nested_parsing():
     """Test that ParsableModel.parse_json() works with nested parse patterns."""
+
     class RecordWithNested(ParsableModel):
         id: int
         info: Info = parse("{name} | {age} | {city}")
@@ -511,6 +520,7 @@ def test_parsable_model_parse_json_invalid_json():
 
 def test_union_type_with_model_parse_pattern():
     """Test union types with _model_parse_pattern."""
+
     class Info(ParsableModel):
         name: str
         age: int
@@ -524,7 +534,7 @@ def test_union_type_with_model_parse_pattern():
 
     class Record(ParsableModel):
         id: int
-        info: Union[PipeInfo, SpaceInfo]
+        info: PipeInfo | SpaceInfo
         email: EmailStr
 
     # Test pipe-separated parsing
@@ -554,6 +564,7 @@ def test_union_type_with_model_parse_pattern():
 
 def test_union_type_with_json_parse_flag():
     """Test union types with _json_parse = True."""
+
     class Info(ParsableModel):
         name: str
         age: int
@@ -567,7 +578,7 @@ def test_union_type_with_json_parse_flag():
 
     class Record(ParsableModel):
         id: int
-        info: Union[JsonInfo, PipeInfo]
+        info: JsonInfo | PipeInfo
         email: EmailStr
 
     # Test JSON parsing
@@ -585,6 +596,7 @@ def test_union_type_with_json_parse_flag():
 
 def test_union_type_with_both_flags():
     """Test class with both _json_parse and _model_parse_pattern."""
+
     class Info(ParsableModel):
         name: str
         age: int
@@ -624,6 +636,7 @@ def test_union_type_with_both_flags():
 
 def test_union_type_parsing_order():
     """Test that union types are tried in order."""
+
     class Info(ParsableModel):
         name: str
         age: int
@@ -637,7 +650,7 @@ def test_union_type_parsing_order():
 
     class Record(ParsableModel):
         id: int
-        info: Union[FirstInfo, SecondInfo]
+        info: FirstInfo | SecondInfo
         email: EmailStr
 
     # This string matches FirstInfo pattern, so it should use FirstInfo
@@ -653,6 +666,7 @@ def test_union_type_parsing_order():
 
 def test_union_type_fallback_behavior():
     """Test fallback when first type fails."""
+
     class Info(ParsableModel):
         name: str
         age: int
@@ -666,7 +680,7 @@ def test_union_type_fallback_behavior():
 
     class Record(ParsableModel):
         id: int
-        info: Union[PipeInfo, SpaceInfo]
+        info: PipeInfo | SpaceInfo
         email: EmailStr
 
     # This string doesn't match PipeInfo pattern, so should fall back to SpaceInfo
@@ -684,6 +698,7 @@ def test_union_type_fallback_behavior():
 
 def test_union_type_with_dict_input():
     """Test that dict inputs still work (no parsing needed)."""
+
     class Info(ParsableModel):
         name: str
         age: int
@@ -697,7 +712,7 @@ def test_union_type_with_dict_input():
 
     class Record(ParsableModel):
         id: int
-        info: Union[JsonInfo, PipeInfo]
+        info: JsonInfo | PipeInfo
         email: EmailStr
 
     # Dict input should work without parsing

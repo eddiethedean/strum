@@ -253,6 +253,11 @@ except ValueError as e:
     print(f"Parse error: {e}")
 ```
 
+**Output:**
+```
+Parse error: String 'Invalid format' does not match pattern '{name} | {age}'
+```
+
 ### Validation Errors
 
 When model validation fails (including parsing failures), Pydantic raises `ValidationError`:
@@ -264,6 +269,17 @@ try:
     record = Record(**{"info": "Invalid format"})
 except ValidationError as e:
     print(e)
+```
+
+**Output:**
+```
+2 validation errors for Record
+info.JsonInfo
+  Input should be a valid dictionary or instance of JsonInfo [type=model_type, input_value='Invalid format', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/model_type
+info.PipeInfo
+  Input should be a valid dictionary or instance of PipeInfo [type=model_type, input_value='Invalid format', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/model_type
 ```
 
 ## Type Hints

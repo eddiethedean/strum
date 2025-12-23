@@ -48,7 +48,7 @@ for item in data:
 
 **Output:**
 ```
-1: Alice (Info)
+1: Alice (JsonInfo)
 3: Charlie (PipeInfo)
 5: Eve (SpaceInfo)
 8: Joe (JsonInfo)
@@ -155,7 +155,12 @@ data = {
 }
 
 person = Person(**data)
-print(person.address.city)  # Output: NYC
+print(person.address.city)
+```
+
+**Output:**
+```
+NYC
 ```
 
 ## Real-World Example
@@ -196,6 +201,13 @@ customers = [
 for data in customers:
     customer = Customer(**data)
     print(f"{customer.id}: {customer.contact.name} - {customer.contact.email}")
+```
+
+**Output:**
+```
+1: Alice - alice@example.com
+2: Bob - bob@example.com
+3: Charlie - charlie@example.com
 ```
 
 ## Best Practices

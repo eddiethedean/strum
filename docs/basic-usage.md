@@ -30,9 +30,16 @@ data = {
 }
 
 record = Record(**data)
-print(record.info.name)  # Output: Alice
-print(record.info.age)   # Output: 30
-print(record.info.city)  # Output: New York
+print(record.info.name)
+print(record.info.age)
+print(record.info.city)
+```
+
+**Output:**
+```
+Alice
+30
+New York
 ```
 
 ### Multiple Patterns (Chaining)
@@ -89,9 +96,16 @@ class SimpleRecord(ParsableModel):
 
 # Parse using the class-defined pattern
 record = SimpleRecord.parse('1 | Alice | 30')
-print(record.id)    # Output: 1
-print(record.name)  # Output: Alice
-print(record.age)   # Output: 30
+print(record.id)
+print(record.name)
+print(record.age)
+```
+
+**Output:**
+```
+1
+Alice
+30
 ```
 
 ### Providing Pattern as Argument
@@ -124,8 +138,14 @@ class RecordWithNested(ParsableModel):
 
 # Parse - nested fields are automatically parsed
 record = RecordWithNested.parse('1 || Alice | 30 | NYC || alice@example.com')
-print(record.info.name)  # Output: Alice
-print(record.info.age)   # Output: 30
+print(record.info.name)
+print(record.info.age)
+```
+
+**Output:**
+```
+Alice
+30
 ```
 
 ## JSON Parsing
@@ -204,6 +224,14 @@ try:
     record = Record(**{"id": 1, "info": "Invalid format", "email": "test@example.com"})
 except ValidationError as e:
     print(e)
+```
+
+**Output:**
+```
+1 validation error for Record
+info
+  Input should be a valid dictionary or instance of Info [type=model_type, input_value='Invalid format', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/model_type
 ```
 
 If a string doesn't match any pattern in a chain, the last pattern's error will be raised, and Pydantic will handle the validation error.
