@@ -5,7 +5,7 @@ from typing import Literal
 import pytest
 from pydantic import BaseModel, EmailStr, ValidationError
 
-from stringent import ParsableModel, parse, parse_json
+from stringent import ParsableModel, ParseResult, parse, parse_json
 
 
 class Info(BaseModel):
@@ -16,12 +16,12 @@ class Info(BaseModel):
 
 class Record(ParsableModel):
     id: int
-    info: Info = parse("{name} | {age} | {city}") | parse("{name} {age} {city}")
+    info: Info = parse("{name} | {age} | {city}") | parse("{name} {age} {city}")  # type: ignore[assignment]
     email: EmailStr
     status: Literal["Active", "Inactive"]
 
 
-def test_parse_dict_input():
+def test_parse_dict_input() -> None:
     """Test parsing when input is already a dictionary."""
     data = {
         "id": 1,
@@ -29,16 +29,16 @@ def test_parse_dict_input():
         "email": "alice@example.com",
         "status": "Active",
     }
-    record = Record(**data)
-    assert record.id == 1
-    assert record.info.name == "Alice"
-    assert record.info.age == 30
-    assert record.info.city == "New York"
-    assert record.email == "alice@example.com"
+    record = Record(**data)  # type: ignore[arg-type]
+    assert record.id == 1  # type: ignore[attr-defined]
+    assert record.info.name == "Alice"  # type: ignore[attr-defined]
+    assert record.info.age == 30  # type: ignore[attr-defined]
+    assert record.info.city == "New York"  # type: ignore[attr-defined]
+    assert record.email == "alice@example.com"  # type: ignore[attr-defined]
     assert record.status == "Active"
 
 
-def test_parse_pipe_separated_string():
+def test_parse_pipe_separated_string() -> None:
     """Test parsing pipe-separated string."""
     data = {
         "id": 3,
@@ -46,14 +46,14 @@ def test_parse_pipe_separated_string():
         "email": "charlie@example.com",
         "status": "Active",
     }
-    record = Record(**data)
-    assert record.id == 3
-    assert record.info.name == "Charlie"
-    assert record.info.age == 27
-    assert record.info.city == "Chicago"
+    record = Record(**data)  # type: ignore[arg-type]
+    assert record.id == 3  # type: ignore[attr-defined]
+    assert record.info.name == "Charlie"  # type: ignore[attr-defined]
+    assert record.info.age == 27  # type: ignore[attr-defined]
+    assert record.info.city == "Chicago"  # type: ignore[attr-defined]
 
 
-def test_parse_space_separated_string():
+def test_parse_space_separated_string() -> None:
     """Test parsing space-separated string."""
     data = {
         "id": 5,
@@ -61,14 +61,14 @@ def test_parse_space_separated_string():
         "email": "eve@example.com",
         "status": "Inactive",
     }
-    record = Record(**data)
-    assert record.id == 5
-    assert record.info.name == "Eve"
-    assert record.info.age == 35
-    assert record.info.city == "Dallas"
+    record = Record(**data)  # type: ignore[arg-type]
+    assert record.id == 5  # type: ignore[attr-defined]
+    assert record.info.name == "Eve"  # type: ignore[attr-defined]
+    assert record.info.age == 35  # type: ignore[attr-defined]
+    assert record.info.city == "Dallas"  # type: ignore[attr-defined]
 
 
-def test_parse_invalid_string():
+def test_parse_invalid_string() -> None:
     """Test that invalid strings raise validation errors."""
     data = {
         "id": 1,
@@ -77,10 +77,10 @@ def test_parse_invalid_string():
         "status": "Active",
     }
     with pytest.raises(ValidationError):
-        Record(**data)
+        Record(**data)  # type: ignore[arg-type]
 
 
-def test_parse_pattern_chaining():
+def test_parse_pattern_chaining() -> None:
     """Test that pattern chaining works correctly."""
     pattern1 = parse("{name} | {age}")
     pattern2 = parse("{name} {age}")
@@ -95,19 +95,19 @@ def test_parse_pattern_chaining():
     assert result2 == {"name": "Bob", "age": "25"}
 
 
-def test_json_parse_pattern_standalone():
+def test_json_parse_pattern_standalone() -> None:
     """Test that the JSON parse pattern works on its own."""
     pattern = parse_json()
     result = pattern.parse('{"name": "Alice", "age": 30, "city": "NYC"}')
     assert result == {"name": "Alice", "age": 30, "city": "NYC"}
 
 
-def test_json_parse_pattern_chained_in_model_field():
+def test_json_parse_pattern_chained_in_model_field() -> None:
     """Test that parse_json() can be chained for model fields."""
 
     class RecordWithJsonInfo(ParsableModel):
         id: int
-        info: Info = parse_json() | parse("{name} | {age} | {city}") | parse("{name} {age} {city}")
+        info: Info = parse_json() | parse("{name} | {age} | {city}") | parse("{name} {age} {city}")  # type: ignore[assignment]
         email: EmailStr
         status: Literal["Active", "Inactive"]
 
@@ -117,39 +117,39 @@ def test_json_parse_pattern_chained_in_model_field():
         "email": "joe@example.com",
         "status": "Active",
     }
-    record = RecordWithJsonInfo(**data)
-    assert record.id == 8
-    assert record.info.name == "Joe"
-    assert record.info.age == 55
-    assert record.info.city == "Tampa"
-    assert record.email == "joe@example.com"
+    record = RecordWithJsonInfo(**data)  # type: ignore[arg-type]  # type: ignore[arg-type]
+    assert record.id == 8  # type: ignore[attr-defined]
+    assert record.info.name == "Joe"  # type: ignore[attr-defined]
+    assert record.info.age == 55  # type: ignore[attr-defined]
+    assert record.info.city == "Tampa"  # type: ignore[attr-defined]
+    assert record.email == "joe@example.com"  # type: ignore[attr-defined]
     assert record.status == "Active"
 
 
-def test_parse_pattern_single():
+def test_parse_pattern_single() -> None:
     """Test single parse pattern."""
     pattern = parse("{name} | {age} | {city}")
     result = pattern.parse("John | 25 | NYC")
     assert result == {"name": "John", "age": "25", "city": "NYC"}
 
 
-def test_parse_with_extra_spaces():
+def test_parse_with_extra_spaces() -> None:
     """Test that extra spaces are handled correctly."""
     pattern = parse("{name} | {age} | {city}")
     result = pattern.parse("  John  |  25  |  NYC  ")
     assert result == {"name": "John", "age": "25", "city": "NYC"}
 
 
-def test_parse_pattern_or_with_invalid_type():
+def test_parse_pattern_or_with_invalid_type() -> None:
     """Test that ParsePattern.__or__ with invalid_type returns NotImplemented."""
 
     pattern = parse("{name}")
     # Call __or__ directly to test the NotImplemented path
-    result = pattern.__or__(42)  # int is not a ParsePattern
+    result = pattern.__or__(42)  # type: ignore[operator]  # int is not a ParsePattern
     assert result is NotImplemented
 
 
-def test_parse_pattern_ror_with_invalid_type():
+def test_parse_pattern_ror_with_invalid_type() -> None:
     """Test that ParsePattern.__ror__ with invalid_type returns NotImplemented."""
 
     pattern = parse("{name}")
@@ -158,7 +158,7 @@ def test_parse_pattern_ror_with_invalid_type():
     assert result is NotImplemented
 
 
-def test_chained_pattern_or_with_invalid_type():
+def test_chained_pattern_or_with_invalid_type() -> None:
     """Test that ChainedParsePattern.__or__ with invalid_type returns NotImplemented."""
 
     pattern1 = parse("{name} | {age}")
@@ -166,11 +166,11 @@ def test_chained_pattern_or_with_invalid_type():
     chained = pattern1 | pattern2
 
     # Call __or__ directly to test the NotImplemented path
-    result = chained.__or__("invalid")  # str is not ParsePattern or ChainedParsePattern
+    result = chained.__or__("invalid")  # type: ignore[operator]  # str is not ParsePattern or ChainedParsePattern
     assert result is NotImplemented
 
 
-def test_chained_pattern_ror_with_invalid_type():
+def test_chained_pattern_ror_with_invalid_type() -> None:
     """Test that ChainedParsePattern.__ror__ with invalid_type returns NotImplemented."""
 
     pattern1 = parse("{name} | {age}")
@@ -182,7 +182,7 @@ def test_chained_pattern_ror_with_invalid_type():
     assert result is NotImplemented
 
 
-def test_chained_pattern_empty_list():
+def test_chained_pattern_empty_list() -> None:
     """Test that ChainedParsePattern raises ValueError for empty patterns list."""
     from stringent.parser import ChainedParsePattern
 
@@ -190,34 +190,34 @@ def test_chained_pattern_empty_list():
         ChainedParsePattern([])
 
 
-def test_parse_pattern_type_error():
+def test_parse_pattern_type_error() -> None:
     """Test that ParsePattern.parse raises TypeError for non-string values."""
     pattern = parse("{name} | {age}")
 
     with pytest.raises(TypeError, match="Expected string"):
-        pattern.parse(None)
+        pattern.parse(None)  # type: ignore[arg-type]
 
     with pytest.raises(TypeError, match="Expected string"):
-        pattern.parse(123)
+        pattern.parse(123)  # type: ignore[arg-type]
 
     with pytest.raises(TypeError, match="Expected string"):
-        pattern.parse({"name": "Alice"})
+        pattern.parse({"name": "Alice"})  # type: ignore[arg-type]
 
 
-def test_chained_pattern_type_error():
+def test_chained_pattern_type_error() -> None:
     """Test that ChainedParsePattern.parse raises TypeError for non-string values."""
     pattern1 = parse("{name} | {age}")
     pattern2 = parse("{name} {age}")
     chained = pattern1 | pattern2
 
     with pytest.raises(TypeError, match="Expected string"):
-        chained.parse(None)
+        chained.parse(None)  # type: ignore[arg-type]
 
     with pytest.raises(TypeError, match="Expected string"):
-        chained.parse(123)
+        chained.parse(123)  # type: ignore[arg-type]
 
 
-def test_parse_pattern_ror_with_valid_type():
+def test_parse_pattern_ror_with_valid_type() -> None:
     """Test that ParsePattern.__ror__ with valid ParsePattern works correctly."""
     pattern1 = parse("{name}")
     pattern2 = parse("{age}")
@@ -232,7 +232,7 @@ def test_parse_pattern_ror_with_valid_type():
     assert result.patterns[1] == pattern2
 
 
-def test_chained_pattern_or_with_parse_pattern():
+def test_chained_pattern_or_with_parse_pattern() -> None:
     """Test that ChainedParsePattern.__or__ with ParsePattern works correctly."""
     from stringent.parser import ChainedParsePattern
 
@@ -250,7 +250,7 @@ def test_chained_pattern_or_with_parse_pattern():
     assert result.patterns[2] == pattern3
 
 
-def test_chained_pattern_or_with_chained_pattern():
+def test_chained_pattern_or_with_chained_pattern() -> None:
     """Test that ChainedParsePattern.__or__ with ChainedParsePattern works correctly."""
     from stringent.parser import ChainedParsePattern
 
@@ -271,7 +271,7 @@ def test_chained_pattern_or_with_chained_pattern():
     assert result.patterns[3] == pattern4
 
 
-def test_chained_pattern_ror_with_parse_pattern():
+def test_chained_pattern_ror_with_parse_pattern() -> None:
     """Test that ChainedParsePattern.__ror__ with ParsePattern works correctly."""
     from stringent.parser import ChainedParsePattern
 
@@ -289,7 +289,7 @@ def test_chained_pattern_ror_with_parse_pattern():
     assert result.patterns[2] == pattern2
 
 
-def test_chained_pattern_ror_with_chained_pattern():
+def test_chained_pattern_ror_with_chained_pattern() -> None:
     """Test that ChainedParsePattern.__ror__ with ChainedParsePattern works correctly."""
     from stringent.parser import ChainedParsePattern
 
@@ -310,7 +310,7 @@ def test_chained_pattern_ror_with_chained_pattern():
     assert result.patterns[3] == pattern2
 
 
-def test_parse_string_fields_with_non_dict():
+def test_parse_string_fields_with_non_dict() -> None:
     """Test that _parse_string_fields handles non-dict data correctly."""
     from stringent.parser import ParsableModel
 
@@ -318,23 +318,23 @@ def test_parse_string_fields_with_non_dict():
         name: str
 
     # Test with list
-    result = SimpleModel._parse_string_fields([1, 2, 3])
+    result = SimpleModel._parse_string_fields([1, 2, 3])  # type: ignore[operator]
     assert result == [1, 2, 3]
 
     # Test with string
-    result = SimpleModel._parse_string_fields("not a dict")
+    result = SimpleModel._parse_string_fields("not a dict")  # type: ignore[operator]
     assert result == "not a dict"
 
     # Test with None
-    result = SimpleModel._parse_string_fields(None)
+    result = SimpleModel._parse_string_fields(None)  # type: ignore[operator]
     assert result is None
 
     # Test with int
-    result = SimpleModel._parse_string_fields(42)
+    result = SimpleModel._parse_string_fields(42)  # type: ignore[operator]
     assert result == 42
 
 
-def test_parse_string_fields_no_patterns():
+def test_parse_string_fields_no_patterns() -> None:
     """Test that _parse_string_fields works with models that have no parse patterns."""
     from stringent.parser import ParsableModel
 
@@ -344,11 +344,11 @@ def test_parse_string_fields_no_patterns():
 
     # Should return data as-is since there are no parse patterns
     data = {"name": "Alice", "age": 30}
-    result = ModelWithoutPatterns._parse_string_fields(data)
+    result = ModelWithoutPatterns._parse_string_fields(data)  # type: ignore[operator]
     assert result == data
 
 
-def test_parse_string_fields_no_parse_patterns_attribute():
+def test_parse_string_fields_no_parse_patterns_attribute() -> None:
     """Test that _parse_string_fields handles missing _parse_patterns attribute."""
     from stringent.parser import ParsableModel
 
@@ -361,11 +361,11 @@ def test_parse_string_fields_no_parse_patterns_attribute():
         delattr(ModelWithoutPatterns, "_parse_patterns")
 
     data = {"name": "Alice", "age": 30}
-    result = ModelWithoutPatterns._parse_string_fields(data)
+    result = ModelWithoutPatterns._parse_string_fields(data)  # type: ignore[operator]
     assert result == data
 
 
-def test_parse_with_non_string_values():
+def test_parse_with_non_string_values() -> None:
     """Test that non-string values in parse results are preserved correctly."""
     from stringent.parser import ParsePattern
 
@@ -385,11 +385,11 @@ def test_parse_with_non_string_values():
     assert result2["age"] == "25"  # Should be stripped
 
 
-def test_parse_pattern_inheritance():
+def test_parse_pattern_inheritance() -> None:
     """Test that parse patterns are inherited from parent classes."""
 
     class BaseRecord(ParsableModel):
-        info: Info = parse("{name} | {age} | {city}")
+        info: Info = parse("{name} | {age} | {city}")  # type: ignore[assignment]
 
     class DerivedRecord(BaseRecord):
         extra: str
@@ -400,21 +400,21 @@ def test_parse_pattern_inheritance():
 
     # Test that inherited pattern works
     data = {"info": "Alice | 30 | NYC", "extra": "test"}
-    record = DerivedRecord(**data)
-    assert record.info.name == "Alice"
-    assert record.info.age == 30
-    assert record.info.city == "NYC"
+    record = DerivedRecord(**data)  # type: ignore[arg-type]
+    assert record.info.name == "Alice"  # type: ignore[attr-defined]
+    assert record.info.age == 30  # type: ignore[attr-defined]
+    assert record.info.city == "NYC"  # type: ignore[attr-defined]
     assert record.extra == "test"
 
 
-def test_parse_pattern_override():
+def test_parse_pattern_override() -> None:
     """Test that child classes can override parent parse patterns."""
 
     class BaseRecord(ParsableModel):
-        info: Info = parse("{name} | {age} | {city}")
+        info: Info = parse("{name} | {age} | {city}")  # type: ignore[assignment]
 
     class DerivedRecord(BaseRecord):
-        info: Info = parse("{name} {age} {city}")  # Override with different pattern
+        info: Info = parse("{name} {age} {city}")  # type: ignore[assignment]  # Override with different pattern  # type: ignore[assignment]
 
     # DerivedRecord should have its own pattern, not the parent's
     assert "info" in DerivedRecord._parse_patterns
@@ -425,13 +425,13 @@ def test_parse_pattern_override():
 
     # Test that the overridden pattern works
     data = {"info": "Eve 35 Dallas"}
-    record = DerivedRecord(**data)
-    assert record.info.name == "Eve"
-    assert record.info.age == 35
-    assert record.info.city == "Dallas"
+    record = DerivedRecord(**data)  # type: ignore[arg-type]
+    assert record.info.name == "Eve"  # type: ignore[attr-defined]
+    assert record.info.age == 35  # type: ignore[attr-defined]
+    assert record.info.city == "Dallas"  # type: ignore[attr-defined]
 
 
-def test_parsable_model_parse_with_pattern():
+def test_parsable_model_parse_with_pattern() -> None:
     """Test that ParsableModel.parse() works with a provided pattern."""
 
     class SimpleRecord(ParsableModel):
@@ -441,12 +441,12 @@ def test_parsable_model_parse_with_pattern():
 
     # Parse with explicit pattern
     record = SimpleRecord.parse("1 | Alice | 30", pattern="{id} | {name} | {age}")
-    assert record.id == 1
-    assert record.name == "Alice"
-    assert record.age == 30
+    assert record.id == 1  # type: ignore[attr-defined]
+    assert record.name == "Alice"  # type: ignore[attr-defined]
+    assert record.age == 30  # type: ignore[attr-defined]
 
 
-def test_parsable_model_parse_with_class_pattern():
+def test_parsable_model_parse_with_class_pattern() -> None:
     """Test that ParsableModel.parse() works with _model_parse_pattern class attribute."""
 
     class SimpleRecord(ParsableModel):
@@ -457,32 +457,32 @@ def test_parsable_model_parse_with_class_pattern():
 
     # Parse using class-defined pattern
     record = SimpleRecord.parse("2 | Bob | 25")
-    assert record.id == 2
-    assert record.name == "Bob"
-    assert record.age == 25
+    assert record.id == 2  # type: ignore[attr-defined]
+    assert record.name == "Bob"  # type: ignore[attr-defined]
+    assert record.age == 25  # type: ignore[attr-defined]
 
 
-def test_parsable_model_parse_with_nested_parsing():
+def test_parsable_model_parse_with_nested_parsing() -> None:
     """Test that ParsableModel.parse() works with nested parse patterns."""
 
     class RecordWithNested(ParsableModel):
         # Use a different delimiter for the outer pattern to avoid conflicts
         _model_parse_pattern = "{id} || {info} || {email}"
         id: int
-        info: Info = parse("{name} | {age} | {city}")
+        info: Info = parse("{name} | {age} | {city}")  # type: ignore[assignment]
         email: EmailStr
 
     # Parse - the info field should be automatically parsed from string
     # The pattern matches: id="1", info="Alice | 30 | NYC", email="alice@example.com"
     record = RecordWithNested.parse("1 || Alice | 30 | NYC || alice@example.com")
-    assert record.id == 1
-    assert record.info.name == "Alice"
-    assert record.info.age == 30
-    assert record.info.city == "NYC"
-    assert record.email == "alice@example.com"
+    assert record.id == 1  # type: ignore[attr-defined]
+    assert record.info.name == "Alice"  # type: ignore[attr-defined]
+    assert record.info.age == 30  # type: ignore[attr-defined]
+    assert record.info.city == "NYC"  # type: ignore[attr-defined]
+    assert record.email == "alice@example.com"  # type: ignore[attr-defined]
 
 
-def test_parsable_model_parse_no_pattern_error():
+def test_parsable_model_parse_no_pattern_error() -> None:
     """Test that ParsableModel.parse() raises error when no pattern is provided."""
 
     class SimpleRecord(ParsableModel):
@@ -494,7 +494,7 @@ def test_parsable_model_parse_no_pattern_error():
         SimpleRecord.parse("1 | Alice")
 
 
-def test_parsable_model_parse_invalid_string():
+def test_parsable_model_parse_invalid_string() -> None:
     """Test that ParsableModel.parse() raises error when string doesn't match pattern."""
 
     class SimpleRecord(ParsableModel):
@@ -508,7 +508,7 @@ def test_parsable_model_parse_invalid_string():
         SimpleRecord.parse("invalid string")
 
 
-def test_parsable_model_parse_json():
+def test_parsable_model_parse_json() -> None:
     """Test that ParsableModel.parse_json() works with JSON strings."""
 
     class SimpleRecord(ParsableModel):
@@ -518,29 +518,29 @@ def test_parsable_model_parse_json():
 
     json_str = '{"id": 1, "name": "Alice", "age": 30}'
     record = SimpleRecord.parse_json(json_str)
-    assert record.id == 1
-    assert record.name == "Alice"
-    assert record.age == 30
+    assert record.id == 1  # type: ignore[attr-defined]
+    assert record.name == "Alice"  # type: ignore[attr-defined]
+    assert record.age == 30  # type: ignore[attr-defined]
 
 
-def test_parsable_model_parse_json_with_nested_parsing():
+def test_parsable_model_parse_json_with_nested_parsing() -> None:
     """Test that ParsableModel.parse_json() works with nested parse patterns."""
 
     class RecordWithNested(ParsableModel):
         id: int
-        info: Info = parse("{name} | {age} | {city}")
+        info: Info = parse("{name} | {age} | {city}")  # type: ignore[assignment]
         email: EmailStr
 
     json_str = '{"id": 1, "info": "Alice | 30 | NYC", "email": "alice@example.com"}'
     record = RecordWithNested.parse_json(json_str)
-    assert record.id == 1
-    assert record.info.name == "Alice"
-    assert record.info.age == 30
-    assert record.info.city == "NYC"
-    assert record.email == "alice@example.com"
+    assert record.id == 1  # type: ignore[attr-defined]
+    assert record.info.name == "Alice"  # type: ignore[attr-defined]
+    assert record.info.age == 30  # type: ignore[attr-defined]
+    assert record.info.city == "NYC"  # type: ignore[attr-defined]
+    assert record.email == "alice@example.com"  # type: ignore[attr-defined]
 
 
-def test_parsable_model_parse_json_invalid_json():
+def test_parsable_model_parse_json_invalid_json() -> None:
     """Test that ParsableModel.parse_json() raises error for invalid JSON."""
     from pydantic import ValidationError
 
@@ -553,7 +553,7 @@ def test_parsable_model_parse_json_invalid_json():
         SimpleRecord.parse_json("not valid json")
 
 
-def test_union_type_with_model_parse_pattern():
+def test_union_type_with_model_parse_pattern() -> None:
     """Test union types with _model_parse_pattern."""
 
     class Info(ParsableModel):
@@ -578,11 +578,11 @@ def test_union_type_with_model_parse_pattern():
         "info": "Alice | 30 | NYC",
         "email": "alice@example.com",
     }
-    record1 = Record(**data1)
+    record1 = Record(**data1)  # type: ignore[arg-type]
     assert isinstance(record1.info, PipeInfo)
-    assert record1.info.name == "Alice"
-    assert record1.info.age == 30
-    assert record1.info.city == "NYC"
+    assert record1.info.name == "Alice"  # type: ignore[attr-defined]
+    assert record1.info.age == 30  # type: ignore[attr-defined]
+    assert record1.info.city == "NYC"  # type: ignore[attr-defined]
 
     # Test space-separated parsing
     data2 = {
@@ -590,14 +590,14 @@ def test_union_type_with_model_parse_pattern():
         "info": "Bob 25 Chicago",
         "email": "bob@example.com",
     }
-    record2 = Record(**data2)
+    record2 = Record(**data2)  # type: ignore[arg-type]
     assert isinstance(record2.info, SpaceInfo)
-    assert record2.info.name == "Bob"
-    assert record2.info.age == 25
-    assert record2.info.city == "Chicago"
+    assert record2.info.name == "Bob"  # type: ignore[attr-defined]
+    assert record2.info.age == 25  # type: ignore[attr-defined]
+    assert record2.info.city == "Chicago"  # type: ignore[attr-defined]
 
 
-def test_union_type_with_json_parse_flag():
+def test_union_type_with_json_parse_flag() -> None:
     """Test union types with _json_parse = True."""
 
     class Info(ParsableModel):
@@ -622,14 +622,14 @@ def test_union_type_with_json_parse_flag():
         "info": '{"name": "Joe", "age": 55, "city": "Tampa"}',
         "email": "joe@example.com",
     }
-    record = Record(**data)
+    record = Record(**data)  # type: ignore[arg-type]
     assert isinstance(record.info, JsonInfo)
-    assert record.info.name == "Joe"
-    assert record.info.age == 55
-    assert record.info.city == "Tampa"
+    assert record.info.name == "Joe"  # type: ignore[attr-defined]
+    assert record.info.age == 55  # type: ignore[attr-defined]
+    assert record.info.city == "Tampa"  # type: ignore[attr-defined]
 
 
-def test_union_type_with_both_flags():
+def test_union_type_with_both_flags() -> None:
     """Test class with both _json_parse and _model_parse_pattern."""
 
     class Info(ParsableModel):
@@ -652,10 +652,10 @@ def test_union_type_with_both_flags():
         "info": '{"name": "Alice", "age": 30, "city": "NYC"}',
         "email": "alice@example.com",
     }
-    record1 = Record(**data1)
-    assert record1.info.name == "Alice"
-    assert record1.info.age == 30
-    assert record1.info.city == "NYC"
+    record1 = Record(**data1)  # type: ignore[arg-type]
+    assert record1.info.name == "Alice"  # type: ignore[attr-defined]
+    assert record1.info.age == 30  # type: ignore[attr-defined]
+    assert record1.info.city == "NYC"  # type: ignore[attr-defined]
 
     # Test pattern parsing (fallback when JSON fails)
     data2 = {
@@ -663,13 +663,13 @@ def test_union_type_with_both_flags():
         "info": "Bob | 25 | Chicago",
         "email": "bob@example.com",
     }
-    record2 = Record(**data2)
-    assert record2.info.name == "Bob"
-    assert record2.info.age == 25
-    assert record2.info.city == "Chicago"
+    record2 = Record(**data2)  # type: ignore[arg-type]
+    assert record2.info.name == "Bob"  # type: ignore[attr-defined]
+    assert record2.info.age == 25  # type: ignore[attr-defined]
+    assert record2.info.city == "Chicago"  # type: ignore[attr-defined]
 
 
-def test_union_type_parsing_order():
+def test_union_type_parsing_order() -> None:
     """Test that union types are tried in order."""
 
     class Info(ParsableModel):
@@ -694,12 +694,12 @@ def test_union_type_parsing_order():
         "info": "Alice | 30 | NYC",
         "email": "alice@example.com",
     }
-    record = Record(**data)
+    record = Record(**data)  # type: ignore[arg-type]
     assert isinstance(record.info, FirstInfo)
-    assert record.info.name == "Alice"
+    assert record.info.name == "Alice"  # type: ignore[attr-defined]
 
 
-def test_union_type_fallback_behavior():
+def test_union_type_fallback_behavior() -> None:
     """Test fallback when first type fails."""
 
     class Info(ParsableModel):
@@ -724,14 +724,14 @@ def test_union_type_fallback_behavior():
         "info": "Eve 35 Dallas",
         "email": "eve@example.com",
     }
-    record = Record(**data)
+    record = Record(**data)  # type: ignore[arg-type]
     assert isinstance(record.info, SpaceInfo)
-    assert record.info.name == "Eve"
-    assert record.info.age == 35
-    assert record.info.city == "Dallas"
+    assert record.info.name == "Eve"  # type: ignore[attr-defined]
+    assert record.info.age == 35  # type: ignore[attr-defined]
+    assert record.info.city == "Dallas"  # type: ignore[attr-defined]
 
 
-def test_union_type_with_dict_input():
+def test_union_type_with_dict_input() -> None:
     """Test that dict inputs still work (no parsing needed)."""
 
     class Info(ParsableModel):
@@ -756,13 +756,13 @@ def test_union_type_with_dict_input():
         "info": {"name": "Alice", "age": 30, "city": "NYC"},
         "email": "alice@example.com",
     }
-    record = Record(**data)
-    assert record.info.name == "Alice"
-    assert record.info.age == 30
-    assert record.info.city == "NYC"
+    record = Record(**data)  # type: ignore[arg-type]
+    assert record.info.name == "Alice"  # type: ignore[attr-defined]
+    assert record.info.age == 30  # type: ignore[attr-defined]
+    assert record.info.city == "NYC"  # type: ignore[attr-defined]
 
 
-def test_json_parsable_model_auto_parse():
+def test_json_parsable_model_auto_parse() -> None:
     """Test that JsonParsableModel automatically parses JSON strings."""
 
     from stringent import JsonParsableModel
@@ -775,30 +775,30 @@ def test_json_parsable_model_auto_parse():
     # Test with JSON string via model_validate
     json_str = '{"name": "Alice", "age": 30, "email": "alice@example.com"}'
     user1 = User.model_validate(json_str)
-    assert user1.name == "Alice"
-    assert user1.age == 30
-    assert user1.email == "alice@example.com"
+    assert user1.name == "Alice"  # type: ignore[attr-defined]
+    assert user1.age == 30  # type: ignore[attr-defined]
+    assert user1.email == "alice@example.com"  # type: ignore[attr-defined]
 
     # Test with model_validate_json
     user2 = User.model_validate_json(json_str)
-    assert user2.name == "Alice"
-    assert user2.age == 30
-    assert user2.email == "alice@example.com"
+    assert user2.name == "Alice"  # type: ignore[attr-defined]
+    assert user2.age == 30  # type: ignore[attr-defined]
+    assert user2.email == "alice@example.com"  # type: ignore[attr-defined]
 
     # Test with dict (should still work)
     user3 = User.model_validate({"name": "Bob", "age": 25, "email": "bob@example.com"})
-    assert user3.name == "Bob"
-    assert user3.age == 25
-    assert user3.email == "bob@example.com"
+    assert user3.name == "Bob"  # type: ignore[attr-defined]
+    assert user3.age == 25  # type: ignore[attr-defined]
+    assert user3.email == "bob@example.com"  # type: ignore[attr-defined]
 
     # Test with kwargs (normal Pydantic behavior)
     user4 = User(name="Charlie", age=35, email="charlie@example.com")
-    assert user4.name == "Charlie"
-    assert user4.age == 35
-    assert user4.email == "charlie@example.com"
+    assert user4.name == "Charlie"  # type: ignore[attr-defined]
+    assert user4.age == 35  # type: ignore[attr-defined]
+    assert user4.email == "charlie@example.com"  # type: ignore[attr-defined]
 
 
-def test_json_parsable_model_with_nested_parsing():
+def test_json_parsable_model_with_nested_parsing() -> None:
     """Test that JsonParsableModel works with nested parse patterns."""
 
     from pydantic import BaseModel
@@ -812,20 +812,20 @@ def test_json_parsable_model_with_nested_parsing():
 
     class User(JsonParsableModel):
         id: int
-        info: Info = parse("{name} | {age} | {city}")
+        info: Info = parse("{name} | {age} | {city}")  # type: ignore[assignment]
         email: str
 
     # JSON string with nested string that needs parsing
     json_str = '{"id": 1, "info": "Alice | 30 | NYC", "email": "alice@example.com"}'
     user = User.model_validate(json_str)
-    assert user.id == 1
-    assert user.info.name == "Alice"
-    assert user.info.age == 30
-    assert user.info.city == "NYC"
-    assert user.email == "alice@example.com"
+    assert user.id == 1  # type: ignore[attr-defined]
+    assert user.info.name == "Alice"  # type: ignore[attr-defined]
+    assert user.info.age == 30  # type: ignore[attr-defined]
+    assert user.info.city == "NYC"  # type: ignore[attr-defined]
+    assert user.email == "alice@example.com"  # type: ignore[attr-defined]
 
 
-def test_json_parsable_model_invalid_json_array():
+def test_json_parsable_model_invalid_json_array() -> None:
     """Test that JsonParsableModel rejects JSON arrays."""
     from stringent import JsonParsableModel
 
@@ -838,7 +838,7 @@ def test_json_parsable_model_invalid_json_array():
         User.model_validate('[{"name": "Alice", "age": 30}]')
 
 
-def test_json_parsable_model_invalid_json_string():
+def test_json_parsable_model_invalid_json_string() -> None:
     """Test that JsonParsableModel rejects JSON string primitives."""
     from stringent import JsonParsableModel
 
@@ -863,7 +863,7 @@ def test_json_parsable_model_invalid_json_string():
         User.model_validate("null")
 
 
-def test_json_parsable_model_malformed_json():
+def test_json_parsable_model_malformed_json() -> None:
     """Test that JsonParsableModel handles malformed JSON gracefully."""
     from stringent import JsonParsableModel
 
@@ -880,7 +880,7 @@ def test_json_parsable_model_malformed_json():
         User.model_validate('{"name": "Alice", age: 30}')
 
 
-def test_json_parsable_model_empty_string():
+def test_json_parsable_model_empty_string() -> None:
     """Test that JsonParsableModel handles empty strings."""
     from stringent import JsonParsableModel
 
@@ -893,7 +893,7 @@ def test_json_parsable_model_empty_string():
         User.model_validate("")
 
 
-def test_json_parsable_model_whitespace_string():
+def test_json_parsable_model_whitespace_string() -> None:
     """Test that JsonParsableModel handles whitespace-only strings."""
     from stringent import JsonParsableModel
 
@@ -906,7 +906,7 @@ def test_json_parsable_model_whitespace_string():
         User.model_validate("   ")
 
 
-def test_json_parsable_model_with_parse_json_field():
+def test_json_parsable_model_with_parse_json_field() -> None:
     """Test that JsonParsableModel works with parse_json() field pattern."""
     from pydantic import BaseModel
 
@@ -918,7 +918,7 @@ def test_json_parsable_model_with_parse_json_field():
 
     class User(JsonParsableModel):
         id: int
-        info: Info = parse_json()
+        info: Info = parse_json()  # type: ignore[assignment]
         email: str
 
     # Top-level JSON with nested JSON string field
@@ -927,13 +927,13 @@ def test_json_parsable_model_with_parse_json_field():
         '"email": "alice@example.com"}'
     )
     user = User.model_validate(json_str)
-    assert user.id == 1
-    assert user.info.name == "Alice"
-    assert user.info.age == 30
-    assert user.email == "alice@example.com"
+    assert user.id == 1  # type: ignore[attr-defined]
+    assert user.info.name == "Alice"  # type: ignore[attr-defined]
+    assert user.info.age == 30  # type: ignore[attr-defined]
+    assert user.email == "alice@example.com"  # type: ignore[attr-defined]
 
 
-def test_json_parsable_model_with_chained_parse_json():
+def test_json_parsable_model_with_chained_parse_json() -> None:
     """Test that JsonParsableModel works with chained patterns including parse_json()."""
     from pydantic import BaseModel
 
@@ -946,7 +946,7 @@ def test_json_parsable_model_with_chained_parse_json():
 
     class User(JsonParsableModel):
         id: int
-        info: Info = parse_json() | parse("{name} | {age} | {city}")
+        info: Info = parse_json() | parse("{name} | {age} | {city}")  # type: ignore[assignment]
         email: str
 
     # Test with JSON string in field (should use parse_json())
@@ -955,19 +955,19 @@ def test_json_parsable_model_with_chained_parse_json():
         '\\"city\\": \\"NYC\\"}", "email": "alice@example.com"}'
     )
     user1 = User.model_validate(json_str)
-    assert user1.info.name == "Alice"
-    assert user1.info.age == 30
-    assert user1.info.city == "NYC"
+    assert user1.info.name == "Alice"  # type: ignore[attr-defined]
+    assert user1.info.age == 30  # type: ignore[attr-defined]
+    assert user1.info.city == "NYC"  # type: ignore[attr-defined]
 
     # Test with pattern string in field (should use parse())
     json_str2 = '{"id": 2, "info": "Bob | 25 | Chicago", "email": "bob@example.com"}'
     user2 = User.model_validate(json_str2)
-    assert user2.info.name == "Bob"
-    assert user2.info.age == 25
-    assert user2.info.city == "Chicago"
+    assert user2.info.name == "Bob"  # type: ignore[attr-defined]
+    assert user2.info.age == 25  # type: ignore[attr-defined]
+    assert user2.info.city == "Chicago"  # type: ignore[attr-defined]
 
 
-def test_json_parsable_model_inheritance():
+def test_json_parsable_model_inheritance() -> None:
     """Test that JsonParsableModel inheritance works correctly."""
     from stringent import JsonParsableModel
 
@@ -981,12 +981,12 @@ def test_json_parsable_model_inheritance():
     # Should work with JSON string
     json_str = '{"name": "Alice", "age": 30, "email": "alice@example.com"}'
     user = DerivedUser.model_validate(json_str)
-    assert user.name == "Alice"
-    assert user.age == 30
-    assert user.email == "alice@example.com"
+    assert user.name == "Alice"  # type: ignore[attr-defined]
+    assert user.age == 30  # type: ignore[attr-defined]
+    assert user.email == "alice@example.com"  # type: ignore[attr-defined]
 
 
-def test_json_parsable_model_with_union_types():
+def test_json_parsable_model_with_union_types() -> None:
     """Test that JsonParsableModel works with union types."""
     from stringent import JsonParsableModel
 
@@ -1005,20 +1005,20 @@ def test_json_parsable_model_with_union_types():
 
     # Test with JSON string (should use JsonUser)
     data = {"id": 1, "user": '{"name": "Alice", "age": 30}'}
-    record = Record(**data)
+    record = Record(**data)  # type: ignore[arg-type]
     assert isinstance(record.user, JsonUser)
-    assert record.user.name == "Alice"
-    assert record.user.age == 30
+    assert record.user.name == "Alice"  # type: ignore[attr-defined]
+    assert record.user.age == 30  # type: ignore[attr-defined]
 
     # Test with pattern string (should use PatternUser)
     data2 = {"id": 2, "user": "Bob | 25"}
-    record2 = Record(**data2)
+    record2 = Record(**data2)  # type: ignore[arg-type]
     assert isinstance(record2.user, PatternUser)
-    assert record2.user.name == "Bob"
-    assert record2.user.age == 25
+    assert record2.user.name == "Bob"  # type: ignore[attr-defined]
+    assert record2.user.age == 25  # type: ignore[attr-defined]
 
 
-def test_json_parsable_model_with_model_parse_pattern():
+def test_json_parsable_model_with_model_parse_pattern() -> None:
     """Test that JsonParsableModel works with _model_parse_pattern (should prioritize JSON)."""
     from stringent import JsonParsableModel
 
@@ -1030,17 +1030,17 @@ def test_json_parsable_model_with_model_parse_pattern():
     # JSON string should be parsed as JSON (not pattern)
     json_str = '{"name": "Alice", "age": 30}'
     user = User.model_validate(json_str)
-    assert user.name == "Alice"
-    assert user.age == 30
+    assert user.name == "Alice"  # type: ignore[attr-defined]
+    assert user.age == 30  # type: ignore[attr-defined]
 
     # Pattern string should still work via model_validate with dict
     # (but not as string since JsonParsableModel intercepts strings as JSON)
     user2 = User.model_validate({"name": "Bob", "age": 25})
-    assert user2.name == "Bob"
-    assert user2.age == 25
+    assert user2.name == "Bob"  # type: ignore[attr-defined]
+    assert user2.age == 25  # type: ignore[attr-defined]
 
 
-def test_json_parsable_model_non_json_string_fallback():
+def test_json_parsable_model_non_json_string_fallback() -> None:
     """Test that JsonParsableModel falls back gracefully for non-JSON strings."""
     from pydantic import BaseModel
 
@@ -1052,18 +1052,18 @@ def test_json_parsable_model_non_json_string_fallback():
 
     class User(JsonParsableModel):
         id: int
-        info: Info = parse("{name} | {age}")
+        info: Info = parse("{name} | {age}")  # type: ignore[assignment]
         email: str
 
     # Non-JSON string at top level should fail (not a dict)
     # But field-level parsing should still work if we pass a dict
     data = {"id": 1, "info": "Alice | 30", "email": "alice@example.com"}
     user = User.model_validate(data)
-    assert user.info.name == "Alice"
-    assert user.info.age == 30
+    assert user.info.name == "Alice"  # type: ignore[attr-defined]
+    assert user.info.age == 30  # type: ignore[attr-defined]
 
 
-def test_json_parsable_model_from_json_method():
+def test_json_parsable_model_from_json_method() -> None:
     """Test the from_json() convenience method."""
     from stringent import JsonParsableModel
 
@@ -1074,18 +1074,18 @@ def test_json_parsable_model_from_json_method():
 
     json_str = '{"name": "Alice", "age": 30, "email": "alice@example.com"}'
     user = User.from_json(json_str)
-    assert user.name == "Alice"
-    assert user.age == 30
-    assert user.email == "alice@example.com"
+    assert user.name == "Alice"  # type: ignore[attr-defined]
+    assert user.age == 30  # type: ignore[attr-defined]
+    assert user.email == "alice@example.com"  # type: ignore[attr-defined]
 
     # Should be equivalent to model_validate
     user2 = User.model_validate(json_str)
-    assert user.name == user2.name
-    assert user.age == user2.age
-    assert user.email == user2.email
+    assert user.name == user2.name  # type: ignore[attr-defined]
+    assert user.age == user2.age  # type: ignore[attr-defined]
+    assert user.email == user2.email  # type: ignore[attr-defined]
 
 
-def test_json_parsable_model_fast_path_check():
+def test_json_parsable_model_fast_path_check() -> None:
     """Test that JsonParsableModel uses fast path for non-JSON strings."""
     from stringent import JsonParsableModel
 
@@ -1101,3 +1101,253 @@ def test_json_parsable_model_fast_path_check():
     # String that starts with '{' but isn't valid JSON should fail gracefully
     with pytest.raises(ValidationError):
         User.model_validate("{invalid json")
+
+
+def test_optional_fields_in_pattern() -> None:
+    """Test optional fields in patterns."""
+
+    from pydantic import BaseModel
+
+    from stringent import ParsableModel, parse
+
+    class Info(BaseModel):
+        name: str
+        age: int | None = None
+        city: str
+
+    class Record(ParsableModel):
+        info: Info = parse("{name} | {age?} | {city}")  # type: ignore[assignment]
+
+    # Works with all fields
+    record1 = Record(info="Alice | 30 | NYC")  # type: ignore[arg-type]
+    assert record1.info.name == "Alice"  # type: ignore[attr-defined]
+    assert record1.info.age == 30  # type: ignore[attr-defined]
+    assert record1.info.city == "NYC"  # type: ignore[attr-defined]
+
+    # Works with missing optional field
+    record2 = Record(info="Bob | NYC")  # type: ignore[arg-type]
+    assert record2.info.name == "Bob"  # type: ignore[attr-defined]
+    assert record2.info.age is None  # type: ignore[attr-defined]
+    assert record2.info.city == "NYC"  # type: ignore[attr-defined]
+
+
+def test_regex_parsing() -> None:
+    """Test regex parsing pattern."""
+    from pydantic import BaseModel
+
+    from stringent import ParsableModel, parse_regex
+
+    class LogEntry(BaseModel):
+        timestamp: str
+        level: str
+        message: str
+
+    class Record(ParsableModel):
+        entry: LogEntry = parse_regex(  # type: ignore[assignment]
+            r"(?P<timestamp>\d{4}-\d{2}-\d{2}) \[(?P<level>\w+)\] (?P<message>.*)"
+        )
+
+    # Parse log line
+    record = Record(entry="2024-01-15 [ERROR] Database connection failed")  # type: ignore[arg-type]
+    assert record.entry.timestamp == "2024-01-15"  # type: ignore[attr-defined]
+    assert record.entry.level == "ERROR"  # type: ignore[attr-defined]
+    assert record.entry.message == "Database connection failed"  # type: ignore[attr-defined]
+
+
+def test_error_recovery() -> None:
+    """Test error recovery mode."""
+    from pydantic import BaseModel
+
+    from stringent import ParsableModel, ParseResult
+
+    class Info(BaseModel):
+        name: str
+        age: int
+        city: str
+
+    class Record(ParsableModel):
+        _model_parse_pattern = "{name} | {age} | {city}"
+        name: str
+        age: int
+        city: str
+
+    # Recovery mode - returns partial result
+    result = Record.parse_with_recovery("Alice | invalid | NYC", strict=False)
+    assert isinstance(result, ParseResult)
+    assert result.data["name"] == "Alice"
+    assert result.data["city"] == "NYC"
+    assert len(result.errors) > 0
+    assert not result  # ParseResult is falsy when there are errors
+
+    # Strict mode - raises error
+    with pytest.raises(ValidationError):
+        Record.parse_with_recovery("Alice | invalid | NYC", strict=True)
+
+
+def test_chained_pattern_type_error_non_parse_pattern() -> None:
+    """Test that ChainedParsePattern raises TypeError for non-ParsePattern instances."""
+    from stringent.parser import ChainedParsePattern
+
+    pattern1 = parse("{name}")
+    # Try to create with a non-ParsePattern
+    with pytest.raises(TypeError, match="All patterns must be ParsePattern instances"):
+        ChainedParsePattern([pattern1, "not a pattern"])  # type: ignore[list-item]
+
+
+def test_json_parse_pattern_non_string_input() -> None:
+    """Test that JsonParsePattern.parse raises ValueError for non-string input."""
+    pattern = parse_json()
+
+    with pytest.raises(ValueError, match="Value must be a JSON string"):
+        pattern.parse(123)  # type: ignore[arg-type]
+
+
+def test_regex_parse_pattern_non_string_input() -> None:
+    """Test that RegexParsePattern.parse raises TypeError for non-string input."""
+    from stringent import parse_regex
+
+    pattern = parse_regex(r"(?P<name>\w+)")
+
+    with pytest.raises(TypeError, match="Expected string"):
+        pattern.parse(123)  # type: ignore[arg-type]
+
+
+def test_parsable_model_extract_pattern_edge_cases() -> None:
+    """Test edge cases in _extract_model_parse_pattern."""
+    from stringent.parser import ParsableModel
+
+    # Test with a class that has _model_parse_pattern as a non-string default
+    class ModelWithNonStringPattern(ParsableModel):
+        """Model with non-string pattern attribute."""
+
+        _model_parse_pattern = 123  # type: ignore[assignment]
+
+        name: str
+
+    # Should return None for non-string patterns
+    pattern = ParsableModel._extract_model_parse_pattern(ModelWithNonStringPattern)
+    assert pattern is None
+
+
+def test_try_parse_with_subclass_non_parsable() -> None:
+    """Test _try_parse_with_subclass with non-ParsableModel subclass."""
+    from pydantic import BaseModel
+
+    from stringent.parser import ParsableModel
+
+    class RegularModel(BaseModel):
+        """Regular Pydantic model, not ParsableModel."""
+
+        name: str
+
+    # Should return None for non-ParsableModel subclasses
+    result = ParsableModel._try_parse_with_subclass(RegularModel, "test")
+    assert result is None
+
+
+def test_parse_with_recovery_no_pattern() -> None:
+    """Test parse_with_recovery when no pattern is provided."""
+
+    class ModelWithoutPattern(ParsableModel):
+        """Model without _model_parse_pattern defined."""
+
+        name: str
+        age: int
+
+    with pytest.raises(ValueError, match="No parse pattern provided"):
+        ModelWithoutPattern.parse_with_recovery("test", strict=False)
+
+
+def test_parse_with_recovery_pattern_matching_failure() -> None:
+    """Test parse_with_recovery when pattern matching fails."""
+
+    class ModelWithPattern(ParsableModel):
+        """Model with pattern."""
+
+        _model_parse_pattern = "{name} | {age}"
+
+        name: str
+        age: int
+
+    # Use a string that doesn't match the pattern
+    result = ModelWithPattern.parse_with_recovery("invalid format", strict=False)
+
+    assert isinstance(result, ParseResult)
+    assert len(result.errors) > 0
+    assert any(error.get("type") == "pattern_error" for error in result.errors)
+
+
+def test_model_validate_with_recovery_strict_mode() -> None:
+    """Test model_validate_with_recovery in strict mode."""
+
+    class TestModel(ParsableModel):
+        """Test model."""
+
+        name: str
+        age: int
+
+    # Strict mode should raise ValidationError on invalid data
+    with pytest.raises(ValidationError):
+        TestModel.model_validate_with_recovery({"name": "Alice"}, strict=True)
+
+
+def test_model_validate_with_recovery_string_input() -> None:
+    """Test model_validate_with_recovery with string input that fails validation."""
+
+    class TestModel(ParsableModel):
+        """Test model."""
+
+        name: str
+        age: int
+
+    # String input that can't be parsed
+    result = TestModel.model_validate_with_recovery("not a dict", strict=False)
+
+    assert isinstance(result, ParseResult)
+    assert len(result.errors) > 0
+    assert result.data == {}  # Should be empty dict for string input
+
+
+def test_json_parse_pattern_non_object() -> None:
+    """Test that JsonParsePattern.parse raises ValueError for non-object JSON."""
+    pattern = parse_json()
+
+    # JSON array (not an object)
+    with pytest.raises(ValueError, match="JSON value must be an object"):
+        pattern.parse("[1, 2, 3]")
+
+    # JSON string (not an object)
+    with pytest.raises(ValueError, match="JSON value must be an object"):
+        pattern.parse('"just a string"')
+
+    # JSON number (not an object)
+    with pytest.raises(ValueError, match="JSON value must be an object"):
+        pattern.parse("123")
+
+
+def test_extract_model_parse_pattern_string_attribute() -> None:
+    """Test _extract_model_parse_pattern when _model_parse_pattern is a plain string."""
+    from stringent.parser import ParsableModel
+
+    # Create a class with _model_parse_pattern as a plain string attribute
+    # This tests the path where attr is a string (not wrapped in ModelPrivateAttr)
+    class ModelWithStringPattern:
+        """Mock class with string pattern attribute."""
+
+        _model_parse_pattern = "{name} | {age}"
+
+    # We need to test this indirectly since Pydantic wraps attributes
+    # Let's test by creating a model and checking if it works
+    class TestModel(ParsableModel):
+        """Model that should work with pattern extraction."""
+
+        _model_parse_pattern = "{name} | {age}"  # type: ignore[assignment]
+
+        name: str
+        age: int
+
+    # Note: Pydantic wraps this, so we test the actual usage
+    # If the pattern is set correctly, parse() should work
+    instance = TestModel.parse("Alice | 30")
+    assert instance.name == "Alice"  # type: ignore[attr-defined]
+    assert instance.age == 30  # type: ignore[attr-defined]

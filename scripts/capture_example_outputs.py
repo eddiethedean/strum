@@ -14,10 +14,11 @@ def capture_outputs(file_path: Path) -> dict:
 
     outputs = []
     for i, (result, block) in enumerate(zip(results, code_blocks, strict=True)):
+        code_str = block["code"]
         output_info = {
             "index": i + 1,
             "line": result["line_number"],
-            "code": block["code"][:100] + "..." if len(block["code"]) > 100 else block["code"],
+            "code": code_str[:100] + "..." if len(code_str) > 100 else code_str,
             "stdout": result["stdout"],
             "has_output": bool(result["stdout"]),
             "success": result["success"],
@@ -30,7 +31,7 @@ def capture_outputs(file_path: Path) -> dict:
     }
 
 
-def main():
+def main() -> None:
     """Capture outputs for all documentation files."""
     base_dir = Path(__file__).parent.parent
 

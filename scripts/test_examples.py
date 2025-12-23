@@ -6,9 +6,18 @@ import sys
 import traceback
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
+from typing import TypedDict
 
 
-def extract_code_blocks(markdown_content: str) -> list[dict[str, str]]:
+class CodeBlock(TypedDict):
+    """Type definition for a code block."""
+
+    code: str
+    start_line: int
+    end_line: int
+
+
+def extract_code_blocks(markdown_content: str) -> list[CodeBlock]:
     """
     Extract all Python code blocks from markdown content.
 
@@ -28,11 +37,11 @@ def extract_code_blocks(markdown_content: str) -> list[dict[str, str]]:
         end_line = markdown_content[: match.end()].count("\n") + 1
 
         code_blocks.append(
-            {
-                "code": code,
-                "start_line": start_line,
-                "end_line": end_line,
-            }
+            CodeBlock(
+                code=code,
+                start_line=start_line,
+                end_line=end_line,
+            )
         )
 
     return code_blocks
@@ -202,7 +211,7 @@ def run_markdown_file_tests(file_path: Path, shared_namespace: bool = True) -> l
     return results
 
 
-def main():
+def main() -> int:
     """Main entry point for testing examples."""
     if len(sys.argv) < 2:
         print("Usage: python scripts/test_examples.py <markdown_file>")

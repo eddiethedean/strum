@@ -39,6 +39,28 @@ result = pattern.parse('{"name": "Alice", "age": 30, "city": "NYC"}')
 # Result: {'name': 'Alice', 'age': 30, 'city': 'NYC'}
 ```
 
+### `parse_regex(pattern: str) -> ParsePattern`
+
+Create a pattern that parses strings using regular expressions with named groups.
+
+**Parameters:**
+- `pattern` (str): Regular expression pattern with named groups (e.g., `r'(?P<name>\w+)'`)
+
+**Returns:**
+- `ParsePattern`: A pattern object that parses strings using regex
+
+**Raises:**
+- `ValueError`: If the pattern doesn't contain named groups or is invalid regex
+
+**Example:**
+```python
+from stringent import parse_regex
+
+pattern = parse_regex(r'(?P<timestamp>\d{4}-\d{2}-\d{2}) \[(?P<level>\w+)\] (?P<message>.*)')
+result = pattern.parse("2024-01-15 [ERROR] Database connection failed")
+# Result: {'timestamp': '2024-01-15', 'level': 'ERROR', 'message': 'Database connection failed'}
+```
+
 ## Classes
 
 ### `ParsePattern`
@@ -55,16 +77,22 @@ Parse a string value according to the pattern.
 - `value` (str): String to parse
 
 **Returns:**
-- `Dict[str, Any]`: Dictionary with parsed values (with whitespace stripped)
+- `Dict[str, Any]`: Dictionary with parsed values (with whitespace stripped). Optional fields that are missing will not be included in the result.
 
 **Raises:**
 - `ValueError`: If the string doesn't match the pattern
+- `TypeError`: If value is not a string
 
 **Example:**
 ```python
 pattern = parse('{name} | {age}')
 result = pattern.parse('Alice | 30')
 # Result: {'name': 'Alice', 'age': '30'}
+
+# With optional field
+pattern_optional = parse('{name} | {age?} | {city}')
+result2 = pattern_optional.parse('Bob | NYC')
+# Result: {'name': 'Bob', 'city': 'NYC'}  # age is missing (optional)
 ```
 
 ##### `__or__(other: ParsePattern) -> ChainedParsePattern`
@@ -197,6 +225,63 @@ record = Record.parse_json(json_str)
 
 **Note:** This method uses Pydantic's `model_validate_json()` internally. You can also use `Record.model_validate_json(json_str)` directly.
 
+##### `parse_with_recovery(value: str, pattern: str = None, strict: bool = False) -> ParsableModel | ParseResult`
+
+Parse a string into a model instance with error recovery.
+
+**Parameters:**
+- `value` (str): String to parse
+- `pattern` (str, optional): Format string pattern. If not provided, uses `_model_parse_pattern` if defined.
+- `strict` (bool): If `True`, raises errors immediately. If `False`, returns `ParseResult` with errors.
+
+**Returns:**
+- `ParsableModel`: Instance of the model class if `strict=True` and parsing succeeds
+- `ParseResult`: Object containing parsed data and errors if `strict=False`
+
+**Raises:**
+- `ValueError`: If pattern is not provided and `_model_parse_pattern` is not defined
+- `ValidationError`: If `strict=True` and parsing fails
+
+**Example:**
+```python
+class Record(ParsableModel):
+    _model_parse_pattern = '{name} | {age} | {city}'
+    name: str
+    age: int
+    city: str
+
+# Recovery mode
+result = Record.parse_with_recovery("Alice | invalid | NYC", strict=False)
+if not result:
+    print("Partial data:", result.data)
+    print("Errors:", result.errors)
+```
+
+##### `model_validate_with_recovery(data: Any, strict: bool = False) -> ParsableModel | ParseResult`
+
+Validate data with error recovery.
+
+**Parameters:**
+- `data` (Any): Data to validate (dict, string, etc.)
+- `strict` (bool): If `True`, raises errors immediately. If `False`, returns `ParseResult` with errors.
+
+**Returns:**
+- `ParsableModel`: Instance of the model class if `strict=True` and validation succeeds
+- `ParseResult`: Object containing parsed data and errors if `strict=False`
+
+**Raises:**
+- `ValidationError`: If `strict=True` and validation fails
+
+**Example:**
+```python
+result = Record.model_validate_with_recovery(
+    {"name": "Alice", "age": "invalid", "city": "NYC"},
+    strict=False
+)
+if not result:
+    print("Errors:", result.errors)
+```
+
 ### `JsonParsableModel`
 
 A `ParsableModel` subclass that automatically parses JSON strings when instantiated. Extends `ParsableModel` with automatic JSON detection.
@@ -234,6 +319,35 @@ user = User.from_json(json_str)
 - `User.model_validate_json(json_str)`
 - `User.from_json(json_str)`
 
+### `ParseResult`
+
+A dataclass that holds parsed data and errors when using error recovery mode.
+
+#### Attributes
+
+- `data` (dict[str, Any]): Successfully parsed data
+- `errors` (list[dict[str, Any]]): List of errors encountered during parsing
+
+Each error in the `errors` list contains:
+- `field` (str): The field path where the error occurred
+- `error` (str): Error message describing what went wrong
+- `type` (str): Error type (e.g., "validation_error", "pattern_error")
+- `input` (Any): The input value that caused the error (if available)
+
+#### Methods
+
+##### `__bool__() -> bool`
+
+Return `True` if parsing was successful (no errors), `False` otherwise.
+
+**Example:**
+```python
+result = Record.parse_with_recovery("Alice | invalid | NYC", strict=False)
+if not result:  # Has errors
+    print("Partial data:", result.data)
+    print("Errors:", result.errors)
+```
+
 #### Model Validators
 
 The `JsonParsableModel` class includes a `model_validator` that automatically:
@@ -265,7 +379,7 @@ json_str = '{"id": 1, "info": "Alice | 30", "email": "alice@example.com"}'
 user = User.model_validate(json_str)
 ```
 
-#### Model Validators
+## Model Validators
 
 The `ParsableModel` class includes a `model_validator` that automatically:
 

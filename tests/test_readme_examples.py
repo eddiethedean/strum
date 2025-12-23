@@ -17,13 +17,13 @@ README_PATH = Path(__file__).parent.parent / "README.md"
 class TestREADMEExamples:
     """Test all code examples in README.md."""
 
-    def test_all_examples_exist(self):
+    def test_all_examples_exist(self) -> None:
         """Verify that README has code examples."""
         content = README_PATH.read_text()
         code_blocks = extract_code_blocks(content)
         assert len(code_blocks) > 0, "README.md should contain at least one code example"
 
-    def test_example_execution(self):
+    def test_example_execution(self) -> None:
         """Test that all examples can be executed."""
         results = run_markdown_file_tests(README_PATH)
 
@@ -51,7 +51,7 @@ class TestREADMEExamples:
                     error_msg += f"  {failure['stderr'][:200]}\n"
             pytest.fail(error_msg)
 
-    def test_example_outputs_captured(self):
+    def test_example_outputs_captured(self) -> None:
         """Verify that we can capture outputs from examples."""
         results = run_markdown_file_tests(README_PATH)
 

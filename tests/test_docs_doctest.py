@@ -18,7 +18,7 @@ def convert_to_doctest_format(code: str) -> str:
     we'd need more sophisticated parsing.
     """
     lines = code.split("\n")
-    doctest_lines = []
+    doctest_lines: list[str] = []
 
     for line in lines:
         # Skip empty lines at start
@@ -58,31 +58,31 @@ def run_examples_as_doctest(file_path: Path) -> tuple[int, int]:
 
     # Add common imports
     try:
-        from typing import Literal, Union
+        from typing import Any, Literal, Union
 
         from pydantic import BaseModel, EmailStr, ValidationError
 
         from stringent import ParsableModel, parse, parse_json
 
-        namespace.update(
-            {
-                "BaseModel": BaseModel,
-                "EmailStr": EmailStr,
-                "ValidationError": ValidationError,
-                "Literal": Literal,
-                "Union": Union,
-                "parse": parse,
-                "parse_json": parse_json,
-                "ParsableModel": ParsableModel,
-            }
-        )
+        namespace_dict: dict[str, Any] = {
+            "BaseModel": BaseModel,
+            "EmailStr": EmailStr,
+            "ValidationError": ValidationError,
+            "Literal": Literal,
+            "Union": Union,
+            "parse": parse,
+            "parse_json": parse_json,
+            "ParsableModel": ParsableModel,
+        }
+        namespace.update(namespace_dict)
     except ImportError:
         # If imports fail, skip doctest verification
         return 0, len(code_blocks)
 
     for block in code_blocks:
         try:
-            _stdout, _stderr, exception = execute_code(block["code"], namespace)
+            code_str = block["code"]
+            _stdout, _stderr, exception = execute_code(code_str, namespace)
             if exception is None:
                 passed += 1
             else:
@@ -93,7 +93,7 @@ def run_examples_as_doctest(file_path: Path) -> tuple[int, int]:
     return passed, failed
 
 
-def run_all_docs_tests():
+def run_all_docs_tests() -> bool:
     """Test all documentation files."""
     base_dir = Path(__file__).parent.parent
 
@@ -123,37 +123,37 @@ def run_all_docs_tests():
 class TestDocsDoctest:
     """Pytest-compatible tests for doctest verification."""
 
-    def test_readme_examples(self):
+    def test_readme_examples(self) -> None:
         """Verify README examples can be executed."""
         readme_path = Path(__file__).parent.parent / "README.md"
         _passed, failed = run_examples_as_doctest(readme_path)
         assert failed == 0, f"{failed} examples failed in README.md"
 
-    def test_getting_started_examples(self):
+    def test_getting_started_examples(self) -> None:
         """Verify getting-started examples can be executed."""
         doc_path = Path(__file__).parent.parent / "docs" / "getting-started.md"
         _passed, failed = run_examples_as_doctest(doc_path)
         assert failed == 0, f"{failed} examples failed in getting-started.md"
 
-    def test_basic_usage_examples(self):
+    def test_basic_usage_examples(self) -> None:
         """Verify basic-usage examples can be executed."""
         doc_path = Path(__file__).parent.parent / "docs" / "basic-usage.md"
         _passed, failed = run_examples_as_doctest(doc_path)
         assert failed == 0, f"{failed} examples failed in basic-usage.md"
 
-    def test_advanced_patterns_examples(self):
+    def test_advanced_patterns_examples(self) -> None:
         """Verify advanced-patterns examples can be executed."""
         doc_path = Path(__file__).parent.parent / "docs" / "advanced-patterns.md"
         _passed, failed = run_examples_as_doctest(doc_path)
         assert failed == 0, f"{failed} examples failed in advanced-patterns.md"
 
-    def test_api_reference_examples(self):
+    def test_api_reference_examples(self) -> None:
         """Verify api-reference examples can be executed."""
         doc_path = Path(__file__).parent.parent / "docs" / "api-reference.md"
         _passed, failed = run_examples_as_doctest(doc_path)
         assert failed == 0, f"{failed} examples failed in api-reference.md"
 
-    def test_index_examples(self):
+    def test_index_examples(self) -> None:
         """Verify index examples can be executed."""
         doc_path = Path(__file__).parent.parent / "docs" / "index.md"
         _passed, failed = run_examples_as_doctest(doc_path)

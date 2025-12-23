@@ -43,6 +43,9 @@ Alice
 - **[Getting Started](getting-started.md)** - Installation and basic concepts
 - **[Basic Usage](basic-usage.md)** - Field-level parsing, pattern chaining, and common patterns
 - **[JSON Parsing](json-parsing.md)** - Automatic JSON parsing with JsonParsableModel
+- **[Regex Parsing](regex-parsing.md)** - Parse strings using regular expressions with named groups
+- **[Error Handling](error-handling.md)** - Error recovery and partial parsing
+- **[FastAPI Integration](fastapi-integration.md)** - Using stringent with FastAPI
 - **[Advanced Patterns](advanced-patterns.md)** - Union types, inheritance, and complex scenarios
 - **[API Reference](api-reference.md)** - Complete API documentation
 
@@ -102,6 +105,44 @@ class User(JsonParsableModel):
 # Automatically parses JSON strings
 json_str = '{"name": "Alice", "age": 30}'
 user = User.model_validate(json_str)
+```
+
+### Regex Patterns
+
+Parse strings using regular expressions:
+
+```python
+from stringent import parse_regex, ParsableModel
+from pydantic import BaseModel
+
+class LogEntry(BaseModel):
+    timestamp: str
+    level: str
+    message: str
+
+class Record(ParsableModel):
+    entry: LogEntry = parse_regex(
+        r'(?P<timestamp>\d{4}-\d{2}-\d{2}) \[(?P<level>\w+)\] (?P<message>.*)'
+    )
+```
+
+### Error Recovery
+
+Collect errors and get partial results:
+
+```python
+from stringent import ParsableModel, ParseResult
+
+class Record(ParsableModel):
+    _model_parse_pattern = "{name} | {age} | {city}"
+    name: str
+    age: int
+    city: str
+
+result = Record.parse_with_recovery("Alice | invalid | NYC", strict=False)
+if not result:
+    print("Partial data:", result.data)
+    print("Errors:", result.errors)
 ```
 
 ## Examples

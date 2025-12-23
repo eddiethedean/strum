@@ -17,7 +17,11 @@ DOC_FILES = [
     "basic-usage.md",
     "advanced-patterns.md",
     "api-reference.md",
+    "error-handling.md",
+    "fastapi-integration.md",
     "index.md",
+    "json-parsing.md",
+    "regex-parsing.md",
 ]
 
 
@@ -25,7 +29,7 @@ class TestDocsExamples:
     """Test all code examples in documentation files."""
 
     @pytest.mark.parametrize("doc_file", DOC_FILES)
-    def test_all_examples_exist(self, doc_file):
+    def test_all_examples_exist(self, doc_file: str) -> None:
         """Verify that each doc file has code examples."""
         doc_path = DOCS_DIR / doc_file
         content = doc_path.read_text()
@@ -33,7 +37,7 @@ class TestDocsExamples:
         assert len(code_blocks) > 0, f"{doc_file} should contain at least one code example"
 
     @pytest.mark.parametrize("doc_file", DOC_FILES)
-    def test_example_execution(self, doc_file):
+    def test_example_execution(self, doc_file: str) -> None:
         """Test that all examples in each doc file can be executed."""
         doc_path = DOCS_DIR / doc_file
         results = run_markdown_file_tests(doc_path)
@@ -63,7 +67,7 @@ class TestDocsExamples:
             pytest.fail(error_msg)
 
     @pytest.mark.parametrize("doc_file", DOC_FILES)
-    def test_example_outputs_captured(self, doc_file):
+    def test_example_outputs_captured(self, doc_file: str) -> None:
         """Verify that we can capture outputs from examples."""
         doc_path = DOCS_DIR / doc_file
         results = run_markdown_file_tests(doc_path)

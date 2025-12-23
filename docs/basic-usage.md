@@ -213,6 +213,34 @@ result = pattern.parse('  Alice  |  30  |  NYC  ')
 # Result: {'name': 'Alice', 'age': '30', 'city': 'NYC'}
 ```
 
+### Optional Fields
+
+You can mark fields as optional in patterns using the `?` suffix:
+
+```python
+from typing import Optional
+from stringent import parse, ParsableModel
+from pydantic import BaseModel
+
+class Info(BaseModel):
+    name: str
+    age: Optional[int] = None
+    city: str
+
+class Record(ParsableModel):
+    info: Info = parse('{name} | {age?} | {city}')
+
+# Works with all fields
+record1 = Record(info="Alice | 30 | NYC")
+assert record1.info.age == 30
+
+# Works with missing optional field
+record2 = Record(info="Bob | NYC")
+assert record2.info.age is None  # Optional field is None
+```
+
+**Important:** Fields marked as optional in patterns must be typed as `Optional[T]` or `T | None` in your Pydantic model.
+
 ## Error Handling
 
 When parsing fails, Pydantic will raise a `ValidationError`:

@@ -95,6 +95,9 @@ Comprehensive documentation is available in the [docs directory](https://github.
 - **[Getting Started](https://github.com/eddiethedean/stringent/blob/main/docs/getting-started.md)** - Installation and basic concepts
 - **[Basic Usage](https://github.com/eddiethedean/stringent/blob/main/docs/basic-usage.md)** - Field-level parsing, pattern chaining, and common patterns
 - **[JSON Parsing](https://github.com/eddiethedean/stringent/blob/main/docs/json-parsing.md)** - Automatic JSON parsing with JsonParsableModel
+- **[Regex Parsing](https://github.com/eddiethedean/stringent/blob/main/docs/regex-parsing.md)** - Parse strings using regular expressions with named groups
+- **[Error Handling](https://github.com/eddiethedean/stringent/blob/main/docs/error-handling.md)** - Error recovery and partial parsing
+- **[FastAPI Integration](https://github.com/eddiethedean/stringent/blob/main/docs/fastapi-integration.md)** - Using stringent with FastAPI
 - **[Advanced Patterns](https://github.com/eddiethedean/stringent/blob/main/docs/advanced-patterns.md)** - Union types, inheritance, and complex scenarios
 - **[API Reference](https://github.com/eddiethedean/stringent/blob/main/docs/api-reference.md)** - Complete API documentation
 - **[Documentation Index](https://github.com/eddiethedean/stringent/blob/main/docs/index.md)** - Overview and quick links

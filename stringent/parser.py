@@ -1,12 +1,27 @@
 """Core parsing logic for stringent."""
 
+import contextlib
 import json
+import re
 import sys
 import types
+from dataclasses import dataclass
 from typing import Any, ClassVar, Union, get_args, get_origin
 
 import parse as parse_lib
 from pydantic import BaseModel, ValidationError, model_validator
+
+
+@dataclass
+class ParseResult:
+    """Result of parsing with error recovery enabled."""
+
+    data: dict[str, Any]
+    errors: list[dict[str, Any]]
+
+    def __bool__(self) -> bool:
+        """Return True if parsing was successful (no errors)."""
+        return len(self.errors) == 0
 
 
 class ParsePattern:
@@ -18,10 +33,74 @@ class ParsePattern:
 
         Args:
             pattern: Format string like '{name} | {age} | {city}' or '{name} {age} {city}'
+                    Optional fields can be marked with '?': '{name} | {age?} | {city}'
         """
-        self.pattern = pattern
+        self.original_pattern = pattern
+        # Extract optional fields (those ending with ?)
+        self.optional_fields = self._extract_optional_fields(pattern)
+        # Create normalized pattern without ? for the parse library
+        self.pattern = self._normalize_pattern(pattern)
         # Compile the pattern using the parse library
-        self.compiled_pattern = parse_lib.compile(pattern)
+        self.compiled_pattern = parse_lib.compile(self.pattern)
+        # Pre-generate pattern variations for optional fields
+        self.pattern_variations = self._generate_pattern_variations()
+
+    @staticmethod
+    def _extract_optional_fields(pattern: str) -> set[str]:
+        """Extract field names that are marked as optional (ending with ?)."""
+        optional_fields = set()
+        # Match {field?} patterns
+        matches = re.findall(r"\{(\w+)\?\}", pattern)
+        optional_fields.update(matches)
+        return optional_fields
+
+    @staticmethod
+    def _normalize_pattern(pattern: str) -> str:
+        """Remove ? from optional fields to create a pattern the parse library can use."""
+        # Replace {field?} with {field}
+        return re.sub(r"\{(\w+)\?\}", r"{\1}", pattern)
+
+    def _generate_pattern_variations(self) -> list[parse_lib.Parser]:
+        """Generate pattern variations with optional fields removed."""
+        if not self.optional_fields:
+            return []
+
+        variations = []
+        # For each optional field, create a pattern without it
+        for optional_field in self.optional_fields:
+            # Remove the optional field and its surrounding delimiters
+            # This is a simplified approach - remove "{field?}" and adjacent delimiters
+            pattern_without_field = re.sub(
+                r"\s*\|?\s*\{" + re.escape(optional_field) + r"\?\}\s*\|?\s*",
+                " | ",
+                self.original_pattern,
+            )
+            pattern_without_field = re.sub(
+                r"\s+\{" + re.escape(optional_field) + r"\?\}\s+",
+                " ",
+                pattern_without_field,
+            )
+            pattern_without_field = re.sub(
+                r"\s+\{" + re.escape(optional_field) + r"\?\}",
+                "",
+                pattern_without_field,
+            )
+            pattern_without_field = re.sub(
+                r"\{" + re.escape(optional_field) + r"\?\}\s+",
+                "",
+                pattern_without_field,
+            )
+            # Clean up multiple spaces/delimiters
+            pattern_without_field = re.sub(r"\s*\|\s*\|\s*", " | ", pattern_without_field)
+            pattern_without_field = re.sub(r"\s+", " ", pattern_without_field)
+            pattern_without_field = pattern_without_field.strip()
+
+            if pattern_without_field and pattern_without_field != self.pattern:
+                with contextlib.suppress(Exception):
+                    # If pattern compilation fails, skip this variation
+                    variations.append(parse_lib.compile(pattern_without_field))
+
+        return variations
 
     def parse(self, value: str) -> dict[str, Any]:
         """
@@ -31,7 +110,8 @@ class ParsePattern:
             value: String to parse
 
         Returns:
-            Dictionary with parsed values (with whitespace stripped)
+            Dictionary with parsed values (with whitespace stripped).
+            Optional fields that are missing will not be included in the result.
 
         Raises:
             ValueError: If the string doesn't match the pattern
@@ -39,12 +119,28 @@ class ParsePattern:
         """
         if not isinstance(value, str):
             raise TypeError(f"Expected string, got {type(value).__name__}")
-        result = self.compiled_pattern.parse(value.strip())
-        if result is None:
-            raise ValueError(f"String '{value}' does not match pattern '{self.pattern}'")
 
-        # Convert ParseResult to dictionary and strip whitespace from values
-        return {k: v.strip() if isinstance(v, str) else v for k, v in result.named.items()}
+        # Try the main pattern first
+        result = self.compiled_pattern.parse(value.strip())
+        if result is not None:
+            parsed_dict = {
+                k: v.strip() if isinstance(v, str) else v for k, v in result.named.items()
+            }
+            # Mark optional fields that are present
+            return parsed_dict
+
+        # If main pattern fails and we have optional fields, try variations
+        if self.optional_fields and self.pattern_variations:
+            for variation in self.pattern_variations:
+                result = variation.parse(value.strip())
+                if result is not None:
+                    parsed_dict = {
+                        k: v.strip() if isinstance(v, str) else v for k, v in result.named.items()
+                    }
+                    # Optional fields not in the result are simply missing
+                    return parsed_dict
+
+        raise ValueError(f"String '{value}' does not match pattern '{self.original_pattern}'")
 
     def __or__(self, other: "ParsePattern") -> "ChainedParsePattern":
         """Support | operator for chaining patterns."""
@@ -121,8 +217,11 @@ class JsonParsePattern(ParsePattern):
 
     def __init__(self) -> None:
         # Use a placeholder pattern name; no compiled pattern is needed for JSON
+        self.original_pattern = "<json>"
         self.pattern = "<json>"
+        self.optional_fields: set[str] = set()
         self.compiled_pattern: Any = None
+        self.pattern_variations: list[Any] = []
 
     def parse(self, value: str) -> dict[str, Any]:
         """
@@ -178,6 +277,84 @@ def parse_json() -> ParsePattern:
     return JsonParsePattern()
 
 
+class RegexParsePattern(ParsePattern):
+    """A pattern that parses strings using regular expressions with named groups."""
+
+    def __init__(self, pattern: str) -> None:
+        r"""
+        Initialize a regex parse pattern.
+
+        Args:
+            pattern: Regular expression pattern with named groups, e.g.
+                    r'(?P<timestamp>\d{4}-\d{2}-\d{2}) \[(?P<level>\w+)\] (?P<message>.*)'
+        """
+        self.regex_pattern = pattern
+        # Compile the regex pattern
+        try:
+            self.compiled_regex = re.compile(pattern)
+        except re.error as e:
+            raise ValueError(f"Invalid regex pattern: {e}") from e
+
+        # Check if pattern has named groups
+        if not self.compiled_regex.groupindex:
+            raise ValueError(
+                "Regex pattern must contain named groups (e.g., (?P<name>...)) "
+                "to map to model fields"
+            )
+
+        # Initialize parent with placeholder (regex patterns don't use parse library format)
+        super().__init__("{regex}")
+
+    def parse(self, value: str) -> dict[str, Any]:
+        """
+        Parse a string value using the regex pattern.
+
+        Args:
+            value: String to parse
+
+        Returns:
+            Dictionary with parsed values from named groups
+
+        Raises:
+            ValueError: If the string doesn't match the pattern
+            TypeError: If value is not a string
+        """
+        if not isinstance(value, str):
+            raise TypeError(f"Expected string, got {type(value).__name__}")
+
+        match = self.compiled_regex.match(value.strip())
+        if match is None:
+            raise ValueError(
+                f"String '{value}' does not match regex pattern '{self.regex_pattern}'"
+            )
+
+        # Extract named groups
+        result = {}
+        for name, value in match.groupdict().items():
+            if value is not None:
+                result[name] = value.strip() if isinstance(value, str) else value
+
+        return result
+
+
+def parse_regex(pattern: str) -> ParsePattern:
+    r"""
+    Create a pattern that parses strings using regular expressions with named groups.
+
+    Args:
+        pattern: Regular expression pattern with named groups
+
+    Returns:
+        A pattern object that parses strings using regex
+
+    Example:
+        entry: LogEntry = parse_regex(
+            r'(?P<timestamp>\d{4}-\d{2}-\d{2}) \[(?P<level>\w+)\] (?P<message>.*)'
+        )
+    """
+    return RegexParsePattern(pattern)
+
+
 class ParsableModel(BaseModel):
     """Base model class that supports parse patterns in field definitions."""
 
@@ -230,7 +407,10 @@ class ParsableModel(BaseModel):
         attr = cls._model_parse_pattern
         # Handle Pydantic's ModelPrivateAttr wrapper
         if hasattr(attr, "default"):
-            return attr.default
+            default_value = attr.default
+            if isinstance(default_value, str):
+                return default_value
+            return None
         if isinstance(attr, str):
             return attr
         return None
@@ -275,25 +455,32 @@ class ParsableModel(BaseModel):
         Returns:
             Parsed model instance if successful, None otherwise
         """
-        if not isinstance(value, str):
+        # Check if subclass is actually a ParsableModel
+        if not issubclass(subclass, ParsableModel):
             return None
 
+        # Type narrowing: subclass is now known to be ParsableModel
+        parsable_subclass: type[ParsableModel] = subclass
+
         # Check for _json_parse flag
-        if getattr(subclass, "_json_parse", False):
+        if getattr(parsable_subclass, "_json_parse", False):
             try:
                 data = json.loads(value)
                 if isinstance(data, dict):
-                    return subclass(**data)
+                    parsed = parsable_subclass(**data)
+                    # Type narrowing: we know it's a ParsableModel
+                    if isinstance(parsed, ParsableModel):
+                        return parsed
             except (json.JSONDecodeError, ValidationError, ValueError):
                 pass  # Fall through to pattern parsing
 
         # Check for _model_parse_pattern
-        pattern = cls._extract_model_parse_pattern(subclass)
+        pattern = cls._extract_model_parse_pattern(parsable_subclass)
         if pattern:
             try:
-                # Type check: subclass should be ParsableModel
-                if issubclass(subclass, ParsableModel):
-                    return subclass.parse(value, pattern=pattern)
+                parsed = parsable_subclass.parse(value, pattern=pattern)
+                if isinstance(parsed, ParsableModel):
+                    return parsed
             except (ValueError, ValidationError):
                 pass
 
@@ -424,6 +611,152 @@ class ParsableModel(BaseModel):
         # Use Pydantic's built-in JSON parsing
         # The _parse_string_fields validator will handle any nested string parsing
         return cls.model_validate_json(value)
+
+    @classmethod
+    def parse_with_recovery(
+        cls, value: str, pattern: str | None = None, strict: bool = False
+    ) -> "ParsableModel | ParseResult":
+        """
+        Parse a string into a model instance with error recovery.
+
+        Args:
+            value: String to parse
+            pattern: Optional format string pattern. If not provided, uses cls._model_parse_pattern
+                    if defined, otherwise raises ValueError.
+            strict: If True, raises errors immediately. If False, returns ParseResult with errors.
+
+        Returns:
+            Instance of the model class if strict=True and parsing succeeds,
+            or ParseResult with data and errors if strict=False
+
+        Raises:
+            ValueError: If pattern is not provided and cls._model_parse_pattern is not defined
+            ValidationError: If strict=True and parsing fails
+
+        Example:
+            class Record(ParsableModel):
+                _model_parse_pattern = '{name} | {age} | {city}'
+                name: str
+                age: int
+                city: str
+
+            # Recovery mode
+            result = Record.parse_with_recovery("Alice | invalid | NYC", strict=False)
+            # result.data = {'name': 'Alice', 'city': 'NYC'}
+            # result.errors = [{'field': 'age', 'error': '...', 'value': 'invalid'}]
+        """
+        if pattern is None:
+            pattern = cls._extract_model_parse_pattern(cls)
+            if pattern is None:
+                raise ValueError(
+                    f"No parse pattern provided and "
+                    f"{cls.__name__}._model_parse_pattern is not defined. "
+                    "Either provide a pattern argument or define "
+                    "_model_parse_pattern on the class."
+                )
+
+        if strict:
+            # Strict mode: raise errors immediately
+            parse_pattern = ParsePattern(pattern)
+            parsed_dict = parse_pattern.parse(value)
+            return cls(**parsed_dict)
+
+        # Recovery mode: collect errors
+        errors = []
+        parsed_dict = {}
+
+        try:
+            parse_pattern = ParsePattern(pattern)
+            parsed_dict = parse_pattern.parse(value)
+            # Try to create model instance
+            try:
+                return cls(**parsed_dict)
+            except ValidationError as e:
+                # Collect validation errors
+                for error in e.errors():
+                    errors.append(
+                        {
+                            "field": ".".join(str(loc) for loc in error.get("loc", [])),
+                            "error": error.get("msg", "Validation error"),
+                            "type": error.get("type", "validation_error"),
+                        }
+                    )
+                # Return partial result
+                return ParseResult(data=parsed_dict, errors=errors)
+        except ValueError as e:
+            # Pattern matching failed
+            errors.append(
+                {
+                    "field": "pattern",
+                    "error": str(e),
+                    "type": "pattern_error",
+                }
+            )
+            return ParseResult(data=parsed_dict, errors=errors)
+
+    @classmethod
+    def model_validate_with_recovery(
+        cls, data: Any, strict: bool = False
+    ) -> "ParsableModel | ParseResult":
+        """
+        Validate data with error recovery.
+
+        Args:
+            data: Data to validate (dict, string, etc.)
+            strict: If True, raises errors immediately. If False, returns ParseResult with errors.
+
+        Returns:
+            Instance of the model class if strict=True and validation succeeds,
+            or ParseResult with data and errors if strict=False
+
+        Raises:
+            ValidationError: If strict=True and validation fails
+
+        Example:
+            class Record(ParsableModel):
+                name: str
+                age: int
+                city: str
+                info: Info = parse('{name} | {age} | {city}')
+
+            # Recovery mode
+            result = Record.model_validate_with_recovery(
+                {"info": "Alice | invalid | NYC"}, strict=False
+            )
+            # result.data contains successfully parsed fields
+            # result.errors contains validation errors
+        """
+        if strict:
+            return cls.model_validate(data)
+
+        # Recovery mode: collect errors
+        errors = []
+        parsed_data = {}
+
+        try:
+            # Try to validate
+            return cls.model_validate(data)
+        except ValidationError as e:
+            # Collect validation errors
+            for error in e.errors():
+                field_path = ".".join(str(loc) for loc in error.get("loc", []))
+                errors.append(
+                    {
+                        "field": field_path,
+                        "error": error.get("msg", "Validation error"),
+                        "type": error.get("type", "validation_error"),
+                        "input": error.get("input"),
+                    }
+                )
+
+            # Try to extract what we can from the input
+            if isinstance(data, dict):
+                parsed_data = data.copy()
+            elif isinstance(data, str):
+                # Try to parse as much as possible
+                parsed_data = {}
+
+            return ParseResult(data=parsed_data, errors=errors)
 
 
 class JsonParsableModel(ParsableModel):

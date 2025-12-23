@@ -1,6 +1,22 @@
 """Stringent - Parse strings into Pydantic models using pattern matching."""
 
-from stringent.parser import JsonParsableModel, ParsableModel, ParsePattern, parse, parse_json
+from stringent.parser import (
+    JsonParsableModel,
+    ParsableModel,
+    ParsePattern,
+    ParseResult,
+    parse,
+    parse_json,
+    parse_regex,
+)
 
-__all__ = ["JsonParsableModel", "ParsableModel", "ParsePattern", "parse", "parse_json"]
-__version__ = "0.2.0"
+__all__ = [
+    "JsonParsableModel",
+    "ParsableModel",
+    "ParsePattern",
+    "ParseResult",
+    "parse",
+    "parse_json",
+    "parse_regex",
+]
+__version__ = "0.3.0"
