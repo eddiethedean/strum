@@ -1,11 +1,11 @@
-# strum
+# stringent
 
-[![CI](https://github.com/eddiethedean/strum/actions/workflows/ci.yml/badge.svg)](https://github.com/eddiethedean/strum/actions/workflows/ci.yml)
-[![Python Version](https://img.shields.io/pypi/pyversions/strum.svg)](https://pypi.org/project/strum/)
-[![License](https://img.shields.io/pypi/l/strum.svg)](https://github.com/eddiethedean/strum/blob/main/LICENSE)
+[![CI](https://github.com/eddiethedean/stringent/actions/workflows/ci.yml/badge.svg)](https://github.com/eddiethedean/stringent/actions/workflows/ci.yml)
+[![Python Version](https://img.shields.io/pypi/pyversions/stringent.svg)](https://pypi.org/project/stringent/)
+[![License](https://img.shields.io/pypi/l/stringent.svg)](https://github.com/eddiethedean/stringent/blob/main/LICENSE)
 [![Code style: ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
-**strum** is a powerful Python library that seamlessly parses strings into Pydantic models using flexible pattern matching. Whether you're working with pipe-separated values, space-separated data, JSON strings, or custom formats, strum makes it easy to convert unstructured strings into validated, type-safe Python objects.
+**stringent** is a powerful Python library that seamlessly parses strings into Pydantic models using flexible pattern matching. Whether you're working with pipe-separated values, space-separated data, JSON strings, or custom formats, stringent makes it easy to convert unstructured strings into validated, type-safe Python objects.
 
 ## Features
 
@@ -26,7 +26,7 @@
 ## Installation
 
 ```bash
-pip install strum
+pip install stringent
 ```
 
 ## Quick Start
@@ -34,7 +34,7 @@ pip install strum
 ```python
 from pydantic import BaseModel, EmailStr
 from typing import Literal
-from strum import parse, parse_json, ParsableModel
+from stringent import parse, parse_json, ParsableModel
 
 class Info(BaseModel):
     name: str
@@ -68,7 +68,7 @@ id=5 info=Info(name='Eve', age=35, city='Dallas') email='eve@example.com' status
 id=8 info=Info(name='Joe', age=55, city='Tampa') email='joe@example.com' status='Active'
 ```
 
-## Why strum?
+## Why stringent?
 
 Working with mixed data formats is a common challenge in data processing. You might receive:
 - Dictionary objects from APIs
@@ -76,7 +76,7 @@ Working with mixed data formats is a common challenge in data processing. You mi
 - Space-separated values from log files
 - JSON strings from message queues
 
-**strum** eliminates the need for manual parsing logic by automatically handling all these formats with a single, declarative definition.
+**stringent** eliminates the need for manual parsing logic by automatically handling all these formats with a single, declarative definition.
 
 ## Key Use Cases
 
@@ -88,13 +88,13 @@ Working with mixed data formats is a common challenge in data processing. You mi
 
 ## Documentation
 
-Comprehensive documentation is available in the [docs directory](https://github.com/eddiethedean/strum/tree/main/docs):
+Comprehensive documentation is available in the [docs directory](https://github.com/eddiethedean/stringent/tree/main/docs):
 
-- **[Getting Started](https://github.com/eddiethedean/strum/blob/main/docs/getting-started.md)** - Installation and basic concepts
-- **[Basic Usage](https://github.com/eddiethedean/strum/blob/main/docs/basic-usage.md)** - Field-level parsing, pattern chaining, and common patterns
-- **[Advanced Patterns](https://github.com/eddiethedean/strum/blob/main/docs/advanced-patterns.md)** - Union types, inheritance, and complex scenarios
-- **[API Reference](https://github.com/eddiethedean/strum/blob/main/docs/api-reference.md)** - Complete API documentation
-- **[Documentation Index](https://github.com/eddiethedean/strum/blob/main/docs/index.md)** - Overview and quick links
+- **[Getting Started](https://github.com/eddiethedean/stringent/blob/main/docs/getting-started.md)** - Installation and basic concepts
+- **[Basic Usage](https://github.com/eddiethedean/stringent/blob/main/docs/basic-usage.md)** - Field-level parsing, pattern chaining, and common patterns
+- **[Advanced Patterns](https://github.com/eddiethedean/stringent/blob/main/docs/advanced-patterns.md)** - Union types, inheritance, and complex scenarios
+- **[API Reference](https://github.com/eddiethedean/stringent/blob/main/docs/api-reference.md)** - Complete API documentation
+- **[Documentation Index](https://github.com/eddiethedean/stringent/blob/main/docs/index.md)** - Overview and quick links
 
 ## Requirements
 
@@ -114,7 +114,7 @@ Comprehensive documentation is available in the [docs directory](https://github.
 Try multiple patterns in order until one matches:
 
 ```python
-from strum import parse, ParsableModel
+from stringent import parse, ParsableModel
 from pydantic import BaseModel
 
 class Info(BaseModel):
@@ -135,7 +135,7 @@ record2 = Record(info="Bob 25 Chicago")
 Automatically parse JSON strings with fallback to pattern matching:
 
 ```python
-from strum import parse_json, parse, ParsableModel
+from stringent import parse_json, parse, ParsableModel
 from pydantic import BaseModel
 
 class Info(BaseModel):
@@ -158,7 +158,7 @@ Use union types to organize parsing strategies:
 
 ```python
 from typing import Union
-from strum import ParsableModel
+from stringent import ParsableModel
 from pydantic import BaseModel
 
 class Info(ParsableModel):
@@ -195,8 +195,8 @@ To set up a development environment:
 
 ```bash
 # Clone the repository
-git clone https://github.com/eddiethedean/strum.git
-cd strum
+git clone https://github.com/eddiethedean/stringent.git
+cd stringent
 
 # Create a virtual environment
 python -m venv venv
@@ -213,12 +213,12 @@ ruff check .
 ruff format .
 
 # Run type checking
-mypy strum/
+mypy stringent/
 ```
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](https://github.com/eddiethedean/strum/blob/main/LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](https://github.com/eddiethedean/stringent/blob/main/LICENSE) file for details.
 
 ## Author
 

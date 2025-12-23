@@ -5,7 +5,7 @@ from typing import Literal
 import pytest
 from pydantic import BaseModel, EmailStr, ValidationError
 
-from strum import ParsableModel, parse, parse_json
+from stringent import ParsableModel, parse, parse_json
 
 
 class Info(BaseModel):
@@ -189,7 +189,7 @@ def test_parse_pattern_ror_with_valid_type():
 
     # Call __ror__ directly: pattern2.__ror__(pattern1) means pattern1 | pattern2
     result = pattern2.__ror__(pattern1)
-    from strum.parser import ChainedParsePattern
+    from stringent.parser import ChainedParsePattern
 
     assert isinstance(result, ChainedParsePattern)
     assert len(result.patterns) == 2
@@ -199,7 +199,7 @@ def test_parse_pattern_ror_with_valid_type():
 
 def test_chained_pattern_or_with_parse_pattern():
     """Test that ChainedParsePattern.__or__ with ParsePattern works correctly."""
-    from strum.parser import ChainedParsePattern
+    from stringent.parser import ChainedParsePattern
 
     pattern1 = parse("{name}")
     pattern2 = parse("{age}")
@@ -217,7 +217,7 @@ def test_chained_pattern_or_with_parse_pattern():
 
 def test_chained_pattern_or_with_chained_pattern():
     """Test that ChainedParsePattern.__or__ with ChainedParsePattern works correctly."""
-    from strum.parser import ChainedParsePattern
+    from stringent.parser import ChainedParsePattern
 
     pattern1 = parse("{name}")
     pattern2 = parse("{age}")
@@ -238,7 +238,7 @@ def test_chained_pattern_or_with_chained_pattern():
 
 def test_chained_pattern_ror_with_parse_pattern():
     """Test that ChainedParsePattern.__ror__ with ParsePattern works correctly."""
-    from strum.parser import ChainedParsePattern
+    from stringent.parser import ChainedParsePattern
 
     pattern1 = parse("{name}")
     pattern2 = parse("{age}")
@@ -256,7 +256,7 @@ def test_chained_pattern_ror_with_parse_pattern():
 
 def test_chained_pattern_ror_with_chained_pattern():
     """Test that ChainedParsePattern.__ror__ with ChainedParsePattern works correctly."""
-    from strum.parser import ChainedParsePattern
+    from stringent.parser import ChainedParsePattern
 
     pattern1 = parse("{name}")
     pattern2 = parse("{age}")
@@ -277,7 +277,7 @@ def test_chained_pattern_ror_with_chained_pattern():
 
 def test_parse_string_fields_with_non_dict():
     """Test that _parse_string_fields handles non-dict data correctly."""
-    from strum.parser import ParsableModel
+    from stringent.parser import ParsableModel
 
     class SimpleModel(ParsableModel):
         name: str
@@ -301,7 +301,7 @@ def test_parse_string_fields_with_non_dict():
 
 def test_parse_string_fields_no_patterns():
     """Test that _parse_string_fields works with models that have no parse patterns."""
-    from strum.parser import ParsableModel
+    from stringent.parser import ParsableModel
 
     class ModelWithoutPatterns(ParsableModel):
         name: str
@@ -315,7 +315,7 @@ def test_parse_string_fields_no_patterns():
 
 def test_parse_string_fields_no_parse_patterns_attribute():
     """Test that _parse_string_fields handles missing _parse_patterns attribute."""
-    from strum.parser import ParsableModel
+    from stringent.parser import ParsableModel
 
     class ModelWithoutPatterns(ParsableModel):
         name: str
@@ -332,7 +332,7 @@ def test_parse_string_fields_no_parse_patterns_attribute():
 
 def test_parse_with_non_string_values():
     """Test that non-string values in parse results are preserved correctly."""
-    from strum.parser import ParsePattern
+    from stringent.parser import ParsePattern
 
     # The ParsePattern.parse method should handle non-string values
     # Since parse library returns strings by default, we test the isinstance check

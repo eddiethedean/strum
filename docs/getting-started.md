@@ -1,13 +1,13 @@
 # Getting Started
 
-This guide will help you get started with `strum`, a library that makes it easy to parse strings into Pydantic models using pattern matching.
+This guide will help you get started with `stringent`, a library that makes it easy to parse strings into Pydantic models using pattern matching.
 
 ## Installation
 
-Install `strum` using pip:
+Install `stringent` using pip:
 
 ```bash
-pip install strum
+pip install stringent
 ```
 
 ## Requirements
@@ -22,7 +22,7 @@ Here's a simple example to get you started:
 
 ```python
 from pydantic import BaseModel, EmailStr
-from strum import parse, ParsableModel
+from stringent import parse, ParsableModel
 
 class Info(BaseModel):
     name: str
@@ -59,7 +59,7 @@ Alice
 A `ParsePattern` is created using the `parse()` function with a format string:
 
 ```python
-from strum import parse
+from stringent import parse
 
 pattern = parse('{name} | {age} | {city}')
 ```

@@ -62,7 +62,7 @@ def run_examples_as_doctest(file_path: Path) -> tuple[int, int]:
 
         from pydantic import BaseModel, EmailStr, ValidationError
 
-        from strum import ParsableModel, parse, parse_json
+        from stringent import ParsableModel, parse, parse_json
 
         namespace.update(
             {

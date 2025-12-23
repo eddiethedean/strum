@@ -1,6 +1,6 @@
 # API Reference
 
-Complete reference documentation for `strum`.
+Complete reference documentation for `stringent`.
 
 ## Core Functions
 
@@ -16,7 +16,7 @@ Create a `ParsePattern` from a format string.
 
 **Example:**
 ```python
-from strum import parse
+from stringent import parse
 
 pattern = parse('{name} | {age} | {city}')
 result = pattern.parse('Alice | 30 | NYC')
@@ -32,7 +32,7 @@ Create a pattern that parses JSON strings into dictionaries.
 
 **Example:**
 ```python
-from strum import parse_json
+from stringent import parse_json
 
 pattern = parse_json()
 result = pattern.parse('{"name": "Alice", "age": 30, "city": "NYC"}')

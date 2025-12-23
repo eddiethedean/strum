@@ -37,7 +37,7 @@ jobs:
       - name: Run tests with coverage
         if: matrix.python-version == '3.10'
         run: |
-          pytest tests/ --cov=strum --cov-report=xml --cov-report=term
+          pytest tests/ --cov=stringent --cov-report=xml --cov-report=term
 
       - name: Upload coverage to Codecov
         if: matrix.python-version == '3.10'
@@ -94,7 +94,7 @@ jobs:
 
       - name: Run mypy
         run: |
-          mypy strum/
+          mypy stringent/
 
   build:
     name: Build Package
@@ -123,5 +123,5 @@ jobs:
       - name: Check built package
         run: |
           pip install dist/*.whl
-          python -c "import strum; print(f'strum version: {strum.__version__ if hasattr(strum, \"__version__\") else \"installed\"}')"
+          python -c "import stringent; print(f'stringent version: {stringent.__version__ if hasattr(stringent, \"__version__\") else \"installed\"}')"
 

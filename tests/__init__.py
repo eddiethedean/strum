@@ -1,1 +1,1 @@
-"""Tests for strum."""
+"""Tests for stringent."""

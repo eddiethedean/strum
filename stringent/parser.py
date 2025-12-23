@@ -1,4 +1,4 @@
-"""Core parsing logic for strum."""
+"""Core parsing logic for stringent."""
 
 import json
 import sys

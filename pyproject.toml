@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "strum"
+name = "stringent"
 version = "0.1.0"
 description = "Parse strings into Pydantic models using pattern matching"
 readme = "README.md"
@@ -38,7 +38,7 @@ dev = [
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["strum*"]
+include = ["stringent*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -83,7 +83,7 @@ ignore = [
 pyupgrade = { keep-runtime-typing = true }
 
 [tool.ruff.lint.isort]
-known-first-party = ["strum"]
+known-first-party = ["stringent"]
 
 [tool.mypy]
 python_version = "3.10"

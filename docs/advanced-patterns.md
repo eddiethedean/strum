@@ -11,7 +11,7 @@ Instead of chaining parse patterns with `|`, you can define separate subclasses 
 ```python
 from typing import Union
 from pydantic import BaseModel, EmailStr
-from strum import ParsableModel
+from stringent import ParsableModel
 
 class Info(ParsableModel):
     name: str
@@ -170,7 +170,7 @@ Here's a complete example showing how to handle multiple data formats:
 ```python
 from typing import Union, Literal
 from pydantic import BaseModel, EmailStr
-from strum import ParsableModel
+from stringent import ParsableModel
 
 class ContactInfo(ParsableModel):
     name: str

@@ -1,10 +1,10 @@
-# strum Documentation
+# stringent Documentation
 
-Welcome to the `strum` documentation! This library makes it easy to parse strings into Pydantic models using pattern matching.
+Welcome to the `stringent` documentation! This library makes it easy to parse strings into Pydantic models using pattern matching.
 
-## What is strum?
+## What is stringent?
 
-`strum` extends Pydantic models with automatic string parsing capabilities. It allows you to:
+`stringent` extends Pydantic models with automatic string parsing capabilities. It allows you to:
 
 - Parse strings into nested Pydantic models using format patterns
 - Chain multiple parsing patterns for flexible input handling
@@ -15,7 +15,7 @@ Welcome to the `strum` documentation! This library makes it easy to parse string
 
 ```python
 from pydantic import BaseModel
-from strum import parse, ParsableModel
+from stringent import parse, ParsableModel
 
 class Info(BaseModel):
     name: str
@@ -100,7 +100,7 @@ See the [Basic Usage Guide](basic-usage.md) for detailed examples, or check out 
 ## Installation
 
 ```bash
-pip install strum
+pip install stringent
 ```
 
 ## Contributing

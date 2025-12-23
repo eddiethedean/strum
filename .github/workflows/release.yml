@@ -75,12 +75,12 @@ jobs:
           body: |
             ## Changes in ${{ steps.tag_version.outputs.tag }}
 
-            See the [full changelog](https://github.com/eddiethedean/strum/compare/${{ github.event.before }}...${{ steps.tag_version.outputs.tag }}) for details.
+            See the [full changelog](https://github.com/eddiethedean/stringent/compare/${{ github.event.before }}...${{ steps.tag_version.outputs.tag }}) for details.
 
             ## Installation
 
             ```bash
-            pip install strum==${{ steps.tag_version.outputs.version }}
+            pip install stringent==${{ steps.tag_version.outputs.version }}
             ```
           draft: false
           prerelease: false

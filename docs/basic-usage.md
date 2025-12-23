@@ -1,6 +1,6 @@
 # Basic Usage Guide
 
-This guide covers the fundamental features of `strum` with practical examples.
+This guide covers the fundamental features of `stringent` with practical examples.
 
 ## Field-Level Parsing
 
@@ -10,7 +10,7 @@ The most common use case is parsing string values for specific fields in your mo
 
 ```python
 from pydantic import BaseModel
-from strum import parse, ParsableModel
+from stringent import parse, ParsableModel
 
 class Info(BaseModel):
     name: str
@@ -171,7 +171,7 @@ The `parse_json()` method is a convenience wrapper around Pydantic's `model_vali
 You can also use JSON parsing as a pattern option:
 
 ```python
-from strum import parse_json
+from stringent import parse_json
 
 class Record(ParsableModel):
     id: int

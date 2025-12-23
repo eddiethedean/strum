@@ -134,7 +134,7 @@ def run_code_block_test(
 
         from pydantic import BaseModel, EmailStr, ValidationError
 
-        from strum import ParsableModel, parse, parse_json
+        from stringent import ParsableModel, parse, parse_json
 
         namespace.update(
             {
