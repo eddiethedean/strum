@@ -3,4 +3,4 @@
 from stringent.parser import JsonParsableModel, ParsableModel, ParsePattern, parse, parse_json
 
 __all__ = ["JsonParsableModel", "ParsableModel", "ParsePattern", "parse", "parse_json"]
-__version__ = "0.1.0"
+__version__ = "0.2.0"
