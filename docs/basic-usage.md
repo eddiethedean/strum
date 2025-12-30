@@ -1,6 +1,6 @@
 # Basic Usage Guide
 
-This guide covers the fundamental features of `stringent` with practical examples.
+This comprehensive guide covers the fundamental features of `stringent` with practical examples and real-world use cases. Learn how to parse strings into Pydantic models efficiently and effectively.
 
 ## Field-Level Parsing
 

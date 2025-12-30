@@ -40,13 +40,25 @@ Alice
 
 ## Documentation
 
-- **[Getting Started](getting-started.md)** - Installation and basic concepts
+### Getting Started
+- **[Getting Started](getting-started.md)** - Installation, quick start, and key concepts
+
+### Core Guides
 - **[Basic Usage](basic-usage.md)** - Field-level parsing, pattern chaining, and common patterns
 - **[JSON Parsing](json-parsing.md)** - Automatic JSON parsing with JsonParsableModel
 - **[Regex Parsing](regex-parsing.md)** - Parse strings using regular expressions with named groups
 - **[Error Handling](error-handling.md)** - Error recovery and partial parsing
-- **[FastAPI Integration](fastapi-integration.md)** - Using stringent with FastAPI
 - **[Advanced Patterns](advanced-patterns.md)** - Union types, inheritance, and complex scenarios
+
+### Integration Guides
+- **[FastAPI Integration](fastapi-integration.md)** - Using stringent with FastAPI
+
+### User Guides
+- **[Migration Guide](user-guides/migration-guide.md)** - Migrating from other libraries or upgrading versions
+- **[Best Practices](user-guides/best-practices.md)** - Tips, patterns, and recommendations
+- **[Troubleshooting](user-guides/troubleshooting.md)** - Common issues and solutions
+
+### Reference
 - **[API Reference](api-reference.md)** - Complete API documentation
 
 ## Key Features
@@ -153,7 +165,7 @@ See the [Basic Usage Guide](basic-usage.md) for detailed examples, or check out 
 
 - Python 3.10+
 - Pydantic 2.0+
-- parse 1.20+
+- formatparse 0.6.0+
 
 ## Installation
 

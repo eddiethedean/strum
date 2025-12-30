@@ -1,6 +1,6 @@
 # JSON Parsing Guide
 
-This guide covers automatic JSON parsing with `JsonParsableModel`, a specialized class that automatically parses JSON strings when creating model instances.
+This comprehensive guide covers automatic JSON parsing with `JsonParsableModel` and field-level JSON parsing patterns. Learn how to seamlessly handle JSON strings in your `stringent` models.
 
 ## Overview
 
@@ -220,9 +220,19 @@ Alice has 2 addresses
 
 4. **Use type hints** - Leverage Pydantic's validation by using proper type annotations
 
+## Performance Considerations
+
+`JsonParsableModel` uses a fast-path optimization:
+- Only attempts JSON parsing for strings starting with `{`
+- Non-JSON strings skip JSON parsing entirely
+- Minimal overhead for non-JSON inputs
+
+This makes it safe to use `JsonParsableModel` even when you're not sure if input will be JSON.
+
 ## See Also
 
 - **[Basic Usage](basic-usage.md)** - Field-level parsing and pattern chaining
 - **[Advanced Patterns](advanced-patterns.md)** - Union types and complex scenarios
 - **[API Reference](api-reference.md)** - Complete API documentation
+- **[Best Practices](user-guides/best-practices.md)** - Tips for using JSON parsing effectively
 

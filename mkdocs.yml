@@ -1,0 +1,70 @@
+site_name: stringent
+site_description: Parse strings into Pydantic models using pattern matching
+site_url: https://stringent.readthedocs.io/
+repo_url: https://github.com/eddiethedean/stringent
+repo_name: eddiethedean/stringent
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: blue
+      accent: blue
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: blue
+      accent: blue
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.annotate
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - admonition
+  - pymdownx.details
+  - pymdownx.tabbed:
+      alternate_style: true
+  - attr_list
+  - md_in_html
+
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - Guides:
+    - Basic Usage: basic-usage.md
+    - JSON Parsing: json-parsing.md
+    - Regex Parsing: regex-parsing.md
+    - Error Handling: error-handling.md
+    - Advanced Patterns: advanced-patterns.md
+  - Integration:
+    - FastAPI Integration: fastapi-integration.md
+  - User Guides:
+    - Quick Reference: user-guides/quick-reference.md
+    - Migration Guide: user-guides/migration-guide.md
+    - Best Practices: user-guides/best-practices.md
+    - Troubleshooting: user-guides/troubleshooting.md
+  - Reference:
+    - API Reference: api-reference.md
+
+plugins:
+  - search
+

@@ -1,6 +1,9 @@
 # API Reference
 
-Complete reference documentation for `stringent`.
+Complete API reference documentation for `stringent`. This document provides detailed information about all classes, functions, and methods available in the library.
+
+!!! tip "Quick Start"
+    New to `stringent`? Check out the [Getting Started Guide](getting-started.md) first, then return here for detailed API documentation.
 
 ## Core Functions
 

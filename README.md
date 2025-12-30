@@ -25,6 +25,10 @@
 
 🧬 **Inheritance Support** - Parse patterns are inherited and can be overridden in subclasses
 
+⚡ **High Performance** - Powered by `formatparse` (Rust-based) for 1.6x faster parsing than alternatives
+
+🛡️ **Error Recovery** - Collect errors and get partial results for graceful error handling
+
 ## Installation
 
 ```bash
@@ -34,9 +38,8 @@ pip install stringent
 ## Quick Start
 
 ```python
-from pydantic import BaseModel, EmailStr
-from typing import Literal
-from stringent import parse, parse_json, ParsableModel
+from pydantic import BaseModel
+from stringent import parse, ParsableModel
 
 class Info(BaseModel):
     name: str
@@ -45,145 +48,66 @@ class Info(BaseModel):
 
 class Record(ParsableModel):
     id: int
-    info: Info = parse_json() | parse('{name} | {age} | {city}') | parse('{name} {age} {city}')
-    email: EmailStr
-    status: Literal['Active', 'Inactive']
+    info: Info = parse('{name} | {age} | {city}')
 
-# Parse the data - handles dicts, strings, and JSON automatically
-data = [
-    {'id': 1, 'info': {'name': 'Alice', 'age': 30, 'city': 'New York'}, 'email': 'alice@example.com', 'status': 'Active'},
-    {'id': 3, 'info': 'Charlie | 27 | Chicago', 'email': 'charlie@example.com', 'status': 'Active'},
-    {'id': 5, 'info': 'Eve 35 Dallas', 'email': 'eve@example.com', 'status': 'Inactive'},
-    {'id': 8, 'info': '{"name": "Joe", "age": 55, "city": "Tampa"}', 'email': 'joe@example.com', 'status': 'Active'},
-]
-
-for item in data:
-    record = Record(**item)
-    print(record)
+# Automatically parses string into nested model
+record = Record(id=1, info="Alice | 30 | NYC")
+print(record.info.name)  # "Alice"
 ```
 
-**Output:**
-```
-id=1 info=Info(name='Alice', age=30, city='New York') email='alice@example.com' status='Active'
-id=3 info=Info(name='Charlie', age=27, city='Chicago') email='charlie@example.com' status='Active'
-id=5 info=Info(name='Eve', age=35, city='Dallas') email='eve@example.com' status='Inactive'
-id=8 info=Info(name='Joe', age=55, city='Tampa') email='joe@example.com' status='Active'
-```
+See the [Getting Started guide](https://stringent.readthedocs.io/en/latest/getting-started.html) for more examples and detailed usage.
 
 ## Why stringent?
 
-Working with mixed data formats is a common challenge in data processing. You might receive:
-- Dictionary objects from APIs
-- Pipe-separated strings from legacy systems
-- Space-separated values from log files
-- JSON strings from message queues
+Working with mixed data formats is a common challenge. You might receive dictionaries from APIs, pipe-separated strings from legacy systems, or JSON strings from message queues.
 
-**stringent** eliminates the need for manual parsing logic by automatically handling all these formats with a single, declarative definition.
+**stringent** eliminates manual parsing logic by automatically handling all these formats with a single, declarative definition. No custom parsers needed—just define your patterns and let `stringent` do the work.
 
 ## Key Use Cases
 
 - **API Integration** - Handle inconsistent data formats from different endpoints
-- **Data Migration** - Parse legacy data formats while maintaining type safety
+- **Data Migration** - Parse legacy formats while maintaining type safety
 - **Log Processing** - Parse structured log entries into validated models
 - **ETL Pipelines** - Transform unstructured strings into typed data structures
-- **Configuration Parsing** - Support multiple configuration formats with fallback patterns
+
+See [use cases and examples](https://stringent.readthedocs.io/en/latest/getting-started.html#common-use-cases) in the documentation.
 
 ## Documentation
 
-Comprehensive documentation is available in the [docs directory](https://github.com/eddiethedean/stringent/tree/main/docs):
+📚 **Full documentation: [stringent.readthedocs.io](https://stringent.readthedocs.io/)**
 
-- **[Getting Started](https://github.com/eddiethedean/stringent/blob/main/docs/getting-started.md)** - Installation and basic concepts
-- **[Basic Usage](https://github.com/eddiethedean/stringent/blob/main/docs/basic-usage.md)** - Field-level parsing, pattern chaining, and common patterns
-- **[JSON Parsing](https://github.com/eddiethedean/stringent/blob/main/docs/json-parsing.md)** - Automatic JSON parsing with JsonParsableModel
-- **[Regex Parsing](https://github.com/eddiethedean/stringent/blob/main/docs/regex-parsing.md)** - Parse strings using regular expressions with named groups
-- **[Error Handling](https://github.com/eddiethedean/stringent/blob/main/docs/error-handling.md)** - Error recovery and partial parsing
-- **[FastAPI Integration](https://github.com/eddiethedean/stringent/blob/main/docs/fastapi-integration.md)** - Using stringent with FastAPI
-- **[Advanced Patterns](https://github.com/eddiethedean/stringent/blob/main/docs/advanced-patterns.md)** - Union types, inheritance, and complex scenarios
-- **[API Reference](https://github.com/eddiethedean/stringent/blob/main/docs/api-reference.md)** - Complete API documentation
-- **[Documentation Index](https://github.com/eddiethedean/stringent/blob/main/docs/index.md)** - Overview and quick links
+Comprehensive guides, examples, and API reference are available in the documentation:
+
+- **[Getting Started](https://stringent.readthedocs.io/en/latest/getting-started.html)** - Installation and quick start
+- **[Basic Usage](https://stringent.readthedocs.io/en/latest/basic-usage.html)** - Field-level parsing and pattern chaining
+- **[JSON Parsing](https://stringent.readthedocs.io/en/latest/json-parsing.html)** - Automatic JSON parsing
+- **[Regex Parsing](https://stringent.readthedocs.io/en/latest/regex-parsing.html)** - Regular expression patterns
+- **[Error Handling](https://stringent.readthedocs.io/en/latest/error-handling.html)** - Error recovery and partial parsing
+- **[Advanced Patterns](https://stringent.readthedocs.io/en/latest/advanced-patterns.html)** - Union types and inheritance
+- **[FastAPI Integration](https://stringent.readthedocs.io/en/latest/fastapi-integration.html)** - Using with FastAPI
+- **[User Guides](https://stringent.readthedocs.io/en/latest/user-guides/)** - Migration, best practices, troubleshooting
+- **[API Reference](https://stringent.readthedocs.io/en/latest/api-reference.html)** - Complete API documentation
 
 ## Requirements
 
 - **Python** 3.10 or higher
 - **Pydantic** 2.0 or higher
-- **parse** 1.20 or higher
+- **formatparse** 0.6.0 or higher
 
 ## Dependencies
 
 - `pydantic>=2.0.0` - For Pydantic model integration and validation
-- `parse>=1.20.0` - For string parsing functionality
+- `formatparse>=0.6.0` - For string parsing functionality
 
-## Examples
+## More Examples
 
-### Pattern Chaining
+For detailed examples and use cases, see the [documentation](https://stringent.readthedocs.io/):
 
-Try multiple patterns in order until one matches:
-
-```python
-from stringent import parse, ParsableModel
-from pydantic import BaseModel
-
-class Info(BaseModel):
-    name: str
-    age: int
-    city: str
-
-class Record(ParsableModel):
-    info: Info = parse('{name} | {age} | {city}') | parse('{name} {age} {city}')
-
-# Both formats work automatically
-record1 = Record(info="Alice | 30 | NYC")
-record2 = Record(info="Bob 25 Chicago")
-```
-
-### JSON Parsing
-
-Automatically parse JSON strings with fallback to pattern matching:
-
-```python
-from stringent import parse_json, parse, ParsableModel
-from pydantic import BaseModel
-
-class Info(BaseModel):
-    name: str
-    age: int
-
-class Record(ParsableModel):
-    info: Info = parse_json() | parse('{name} | {age}')
-
-# JSON string
-record1 = Record(info='{"name": "Alice", "age": 30}')
-
-# Pattern string (fallback)
-record2 = Record(info="Bob | 25")
-```
-
-### Union Types
-
-Use union types to organize parsing strategies:
-
-```python
-from typing import Union
-from stringent import ParsableModel
-from pydantic import BaseModel
-
-class Info(ParsableModel):
-    name: str
-    age: int
-
-class PipeInfo(Info):
-    _model_parse_pattern = '{name} | {age}'
-
-class SpaceInfo(Info):
-    _model_parse_pattern = '{name} {age}'
-
-class Record(ParsableModel):
-    info: Union[PipeInfo, SpaceInfo]
-
-# Automatically selects the correct type
-record1 = Record(info="Alice | 30")  # Uses PipeInfo
-record2 = Record(info="Bob 25")      # Uses SpaceInfo
-```
+- **[Pattern Chaining](https://stringent.readthedocs.io/en/latest/basic-usage.html#pattern-chaining)** - Try multiple patterns in order
+- **[JSON Parsing](https://stringent.readthedocs.io/en/latest/json-parsing.html)** - Automatic JSON with fallback patterns
+- **[Union Types](https://stringent.readthedocs.io/en/latest/advanced-patterns.html#union-types)** - Organize parsing strategies
+- **[Regex Patterns](https://stringent.readthedocs.io/en/latest/regex-parsing.html)** - Parse with regular expressions
+- **[Error Recovery](https://stringent.readthedocs.io/en/latest/error-handling.html)** - Graceful error handling
 
 ## Contributing
 
@@ -248,7 +172,7 @@ This project is licensed under the MIT License - see the [LICENSE](https://githu
 ## Acknowledgments
 
 - Built on [Pydantic](https://pydantic.dev/) for robust data validation
-- Uses [parse](https://github.com/r1chardj0n3s/parse) for flexible string parsing
+- Powered by [formatparse](https://github.com/astral-sh/formatparse) for high-performance string parsing (1.6x faster than alternatives)
 
 ---
 

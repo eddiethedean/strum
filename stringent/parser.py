@@ -1,4 +1,9 @@
-"""Core parsing logic for stringent."""
+"""
+Core parsing logic for stringent.
+
+This module provides the fundamental parsing capabilities for converting strings
+into structured data using pattern matching, JSON parsing, and regex patterns.
+"""
 
 import contextlib
 import json
@@ -8,32 +13,132 @@ import types
 from dataclasses import dataclass
 from typing import Any, ClassVar, Union, get_args, get_origin
 
-import parse as parse_lib
+# Try to import formatparse, fallback to _formatparse
+try:
+    import formatparse as parse_lib
+except ImportError:
+    import _formatparse as parse_lib
 from pydantic import BaseModel, ValidationError, model_validator
 
 
 @dataclass
 class ParseResult:
-    """Result of parsing with error recovery enabled."""
+    """
+    Result of parsing with error recovery enabled.
+
+    This class is returned when using `parse_with_recovery()` or
+    `model_validate_with_recovery()` with `strict=False`. It contains both
+    the successfully parsed data and any errors encountered during parsing.
+
+    Attributes:
+        data: Dictionary containing successfully parsed fields and their values.
+              Fields that failed validation are not included.
+        errors: List of error dictionaries, each containing:
+            - `field`: Field path where the error occurred (e.g., "age" or "info.name")
+            - `error`: Error message describing what went wrong
+            - `type`: Error type (e.g., "validation_error", "pattern_error")
+            - `input`: (Optional) The input value that caused the error
+
+    Example:
+        ```python
+        class Record(ParsableModel):
+            _model_parse_pattern = '{name} | {age} | {city}'
+            name: str
+            age: int
+            city: str
+
+        result = Record.parse_with_recovery("Alice | invalid | NYC", strict=False)
+        if not result:  # Check if there were errors
+            print("Partial data:", result.data)  # {'name': 'Alice', 'city': 'NYC'}
+            print("Errors:", result.errors)  # [{'field': 'age', 'error': '...', ...}]
+        else:
+            record = result  # Successfully parsed
+        ```
+
+    Note:
+        The `ParseResult` object is falsy when there are errors, making it easy
+        to check parsing success: `if result: ...`
+    """
 
     data: dict[str, Any]
     errors: list[dict[str, Any]]
 
     def __bool__(self) -> bool:
-        """Return True if parsing was successful (no errors)."""
+        """
+        Return True if parsing was successful (no errors).
+
+        Returns:
+            True if no errors occurred, False otherwise.
+
+        Example:
+            ```python
+            result = Record.parse_with_recovery("Alice | 30 | NYC", strict=False)
+            if result:
+                # Parsing succeeded
+                record = result
+            else:
+                # Handle errors
+                print(result.errors)
+            ```
+        """
         return len(self.errors) == 0
 
 
 class ParsePattern:
-    """A pattern that can parse strings into dictionaries based on format strings."""
+    """
+    A pattern that can parse strings into dictionaries based on format strings.
+
+    ParsePattern uses format string syntax similar to Python's `str.format()` method
+    to extract named fields from strings. Patterns can include optional fields and
+    support various delimiters.
+
+    Attributes:
+        original_pattern: The original pattern string as provided
+        pattern: Normalized pattern (optional fields converted)
+        compiled_pattern: Compiled pattern object from formatparse
+        optional_fields: Set of field names marked as optional
+
+    Example:
+        ```python
+        from stringent import parse
+
+        # Simple pattern
+        pattern = parse('{name} | {age} | {city}')
+        result = pattern.parse("Alice | 30 | NYC")
+        # Returns: {'name': 'Alice', 'age': '30', 'city': 'NYC'}
+
+        # Pattern with optional field
+        pattern = parse('{name} | {age?} | {city}')
+        result = pattern.parse("Bob | Chicago")  # age is optional
+        # Returns: {'name': 'Bob', 'city': 'Chicago'}
+        ```
+
+    Note:
+        Patterns are compiled once and can be reused efficiently. For best
+        performance in concurrent scenarios, compile patterns once and reuse them.
+    """
 
     def __init__(self, pattern: str):
         """
         Initialize a ParsePattern with a format string.
 
         Args:
-            pattern: Format string like '{name} | {age} | {city}' or '{name} {age} {city}'
-                    Optional fields can be marked with '?': '{name} | {age?} | {city}'
+            pattern: Format string with named fields in curly braces.
+                    Examples:
+                    - `'{name} | {age} | {city}'` - Pipe-separated
+                    - `'{name} {age} {city}'` - Space-separated
+                    - `'{name} | {age?} | {city}'` - With optional field
+                    - `'{id}:::{name}:::{status}'` - Custom delimiter
+
+        Raises:
+            ValueError: If the pattern cannot be compiled by formatparse
+
+        Example:
+            ```python
+            pattern = ParsePattern('{name} | {age}')
+            result = pattern.parse("Alice | 30")
+            assert result == {'name': 'Alice', 'age': '30'}
+            ```
         """
         self.original_pattern = pattern
         # Extract optional fields (those ending with ?)
@@ -60,7 +165,7 @@ class ParsePattern:
         # Replace {field?} with {field}
         return re.sub(r"\{(\w+)\?\}", r"{\1}", pattern)
 
-    def _generate_pattern_variations(self) -> list[parse_lib.Parser]:
+    def _generate_pattern_variations(self) -> list[parse_lib.FormatParser]:
         """Generate pattern variations with optional fields removed."""
         if not self.optional_fields:
             return []
@@ -106,16 +211,43 @@ class ParsePattern:
         """
         Parse a string value according to the pattern.
 
+        Extracts named fields from the input string based on the pattern format.
+        All string values are automatically stripped of leading/trailing whitespace.
+
         Args:
-            value: String to parse
+            value: String to parse. Must match the pattern format.
 
         Returns:
-            Dictionary with parsed values (with whitespace stripped).
-            Optional fields that are missing will not be included in the result.
+            Dictionary mapping field names to their parsed values. All string
+            values are stripped of whitespace. Optional fields that are missing
+            from the input are not included in the result.
 
         Raises:
-            ValueError: If the string doesn't match the pattern
+            ValueError: If the string doesn't match the pattern format
             TypeError: If value is not a string
+
+        Example:
+            ```python
+            pattern = parse('{name} | {age} | {city}')
+
+            # Successful parse
+            result = pattern.parse("Alice | 30 | NYC")
+            # Returns: {'name': 'Alice', 'age': '30', 'city': 'NYC'}
+
+            # Handles extra whitespace
+            result = pattern.parse("  Bob  |  25  |  Chicago  ")
+            # Returns: {'name': 'Bob', 'age': '25', 'city': 'Chicago'}
+
+            # With optional field
+            pattern = parse('{name} | {age?} | {city}')
+            result = pattern.parse("Charlie | Dallas")
+            # Returns: {'name': 'Charlie', 'city': 'Dallas'}  # age not included
+            ```
+
+        Note:
+            The pattern matching is strict - the input must match the pattern
+            exactly (allowing for whitespace variations). For more flexible
+            parsing, consider using regex patterns with `parse_regex()`.
         """
         if not isinstance(value, str):
             raise TypeError(f"Expected string, got {type(value).__name__}")
@@ -254,11 +386,42 @@ def parse(pattern: str) -> ParsePattern:
     """
     Create a ParsePattern from a format string.
 
+    This is the primary function for creating parsing patterns. The pattern
+    uses format string syntax with named fields in curly braces.
+
     Args:
-        pattern: Format string like '{name} | {age} | {city}'
+        pattern: Format string with named fields. Examples:
+            - `'{name} | {age} | {city}'` - Pipe-separated values
+            - `'{name} {age} {city}'` - Space-separated values
+            - `'{name} | {age?} | {city}'` - With optional field (age)
+            - `'{id}:::{name}:::{status}'` - Custom delimiter
 
     Returns:
-        ParsePattern instance
+        ParsePattern instance that can be used to parse strings or assigned
+        to model fields.
+
+    Example:
+        ```python
+        from stringent import parse
+        from pydantic import BaseModel
+
+        class Info(BaseModel):
+            name: str
+            age: int
+            city: str
+
+        class Record(ParsableModel):
+            info: Info = parse('{name} | {age} | {city}')
+
+        # Pattern can also be used standalone
+        pattern = parse('{name} | {age}')
+        result = pattern.parse("Alice | 30")
+        assert result == {'name': 'Alice', 'age': '30'}
+        ```
+
+    See Also:
+        - `parse_json()`: For JSON string parsing
+        - `parse_regex()`: For regex-based parsing
     """
     return ParsePattern(pattern)
 
@@ -267,12 +430,43 @@ def parse_json() -> ParsePattern:
     """
     Create a pattern that parses JSON strings into dictionaries.
 
-    This can be chained with other patterns using the | operator, e.g.:
-
-        info: Info = parse('{name} | {age} | {city}') | parse('{name} {age} {city}') | parse_json()
+    This pattern attempts to parse the input as a JSON object. It's commonly
+    used in pattern chains to support both JSON and format string inputs.
 
     Returns:
-        A pattern object that parses JSON strings.
+        A ParsePattern instance that parses JSON strings. When used in a chain,
+        it will try JSON parsing first, then fall back to other patterns if JSON
+        parsing fails.
+
+    Example:
+        ```python
+        from stringent import parse, parse_json
+        from pydantic import BaseModel
+
+        class Info(BaseModel):
+            name: str
+            age: int
+            city: str
+
+        class Record(ParsableModel):
+            # Try JSON first, then format string
+            info: Info = parse_json() | parse('{name} | {age} | {city}')
+
+        # JSON string works
+        record1 = Record(info='{"name": "Alice", "age": 30, "city": "NYC"}')
+
+        # Format string works (fallback)
+        record2 = Record(info="Bob | 25 | Chicago")
+        ```
+
+    Note:
+        - Only JSON objects are supported (not arrays, primitives, etc.)
+        - Invalid JSON will raise ValueError
+        - When chained, JSON parsing is tried first, then other patterns
+
+    See Also:
+        - `parse()`: For format string patterns
+        - `JsonParsableModel`: For automatic JSON parsing at model level
     """
     return JsonParsePattern()
 
@@ -341,22 +535,108 @@ def parse_regex(pattern: str) -> ParsePattern:
     r"""
     Create a pattern that parses strings using regular expressions with named groups.
 
+    This function creates a regex-based parsing pattern that uses Python's regular
+    expression syntax with named groups to extract fields from strings. This is
+    particularly useful for parsing log files, unstructured text, or complex formats
+    that format strings cannot handle.
+
     Args:
-        pattern: Regular expression pattern with named groups
+        pattern: Regular expression pattern with named groups using `(?P<name>...)` syntax.
+                The pattern must contain at least one named group to map to model fields.
 
     Returns:
-        A pattern object that parses strings using regex
+        A ParsePattern instance that parses strings using the regex pattern.
+
+    Raises:
+        ValueError: If the regex pattern is invalid or doesn't contain named groups.
 
     Example:
-        entry: LogEntry = parse_regex(
-            r'(?P<timestamp>\d{4}-\d{2}-\d{2}) \[(?P<level>\w+)\] (?P<message>.*)'
-        )
+        ```python
+        from stringent import parse_regex, ParsableModel
+        from pydantic import BaseModel
+
+        class LogEntry(BaseModel):
+            timestamp: str
+            level: str
+            message: str
+
+        class Record(ParsableModel):
+            entry: LogEntry = parse_regex(
+                r'(?P<timestamp>\d{4}-\d{2}-\d{2}) \[(?P<level>\w+)\] (?P<message>.*)'
+            )
+
+        # Parse log line
+        record = Record(entry="2024-01-15 [ERROR] Database connection failed")
+        print(record.entry.timestamp)  # "2024-01-15"
+        print(record.entry.level)      # "ERROR"
+        print(record.entry.message)     # "Database connection failed"
+        ```
+
+    Note:
+        - The regex pattern must use named groups `(?P<name>...)` to map to model fields
+        - Only named groups are extracted; unnamed groups are ignored
+        - The pattern is matched from the start of the string (uses `match()`, not `search()`)
+        - String values are automatically stripped of whitespace
+
+    See Also:
+        - `parse()`: For format string patterns (simpler, more readable)
+        - `parse_json()`: For JSON string parsing
     """
     return RegexParsePattern(pattern)
 
 
 class ParsableModel(BaseModel):
-    """Base model class that supports parse patterns in field definitions."""
+    """
+    Base model class that supports parse patterns in field definitions.
+
+    ParsableModel extends Pydantic's BaseModel with automatic string parsing
+    capabilities. When you define a field with a ParsePattern, the model will
+    automatically parse string values using that pattern before validation.
+
+    Key Features:
+        - Automatic string parsing for fields with parse patterns
+        - Pattern chaining support (try multiple patterns in order)
+        - Union type support for organizing parsing strategies
+        - Inheritance of parse patterns from parent classes
+        - Model-level parsing with `_model_parse_pattern`
+        - Error recovery with `parse_with_recovery()`
+
+    Example:
+        ```python
+        from pydantic import BaseModel
+        from stringent import parse, ParsableModel
+
+        class Info(BaseModel):
+            name: str
+            age: int
+            city: str
+
+        class Record(ParsableModel):
+            id: int
+            # Field-level parsing
+            info: Info = parse('{name} | {age} | {city}')
+            email: str
+
+        # String is automatically parsed
+        record = Record(
+            id=1,
+            info="Alice | 30 | NYC",  # Parsed into Info object
+            email="alice@example.com"
+        )
+        print(record.info.name)  # "Alice"
+        print(record.info.age)   # 30
+        ```
+
+    Class Attributes:
+        _parse_patterns: Dictionary mapping field names to (pattern, target_type) tuples.
+                        This is automatically populated from field definitions.
+
+    See Also:
+        - `JsonParsableModel`: For automatic JSON string parsing
+        - `parse()`: Create format string patterns
+        - `parse_json()`: Create JSON parsing patterns
+        - `parse_regex()`: Create regex parsing patterns
+    """
 
     _parse_patterns: ClassVar[
         dict[str, tuple[ParsePattern | ChainedParsePattern, type[BaseModel]]]
@@ -536,27 +816,47 @@ class ParsableModel(BaseModel):
         """
         Parse a string into a model instance.
 
+        This method parses an entire model from a single string using a pattern that
+        matches all top-level fields. Nested fields with parse patterns are automatically
+        handled by the model validator.
+
         Args:
-            value: String to parse
-            pattern: Optional format string pattern. If not provided, uses cls._model_parse_pattern
-                    if defined, otherwise raises ValueError.
+            value: String to parse. Must match the pattern format.
+            pattern: Optional format string pattern. If not provided, uses
+                    `cls._model_parse_pattern` if defined, otherwise raises ValueError.
+                    The pattern should include all top-level fields of the model.
 
         Returns:
-            Instance of the model class
+            Instance of the model class with all fields parsed and validated.
 
         Raises:
-            ValueError: If pattern is not provided and cls._model_parse_pattern is not defined,
-                       or if the string doesn't match the pattern.
+            ValueError: If pattern is not provided and `cls._model_parse_pattern` is not
+                       defined, or if the string doesn't match the pattern.
+            ValidationError: If parsed values don't match the model's field types or
+                           validation rules.
 
         Example:
+            ```python
             class Record(ParsableModel):
-                _model_parse_pattern = '{id} | {info} | {email} | {status}'
+                _model_parse_pattern = '{id} | {name} | {age}'
                 id: int
-                info: Info = parse('{name} | {age} | {city}')
-                email: EmailStr
-                status: str
+                name: str
+                age: int
 
-            record = Record.parse('1 | Alice | 30 | NYC | alice@example.com | Active')
+            # Parse using class-defined pattern
+            record = Record.parse('1 | Alice | 30')
+            assert record.id == 1
+            assert record.name == "Alice"
+            assert record.age == 30
+
+            # Parse with explicit pattern
+            record2 = Record.parse('2 | Bob | 25', pattern='{id} | {name} | {age}')
+            ```
+
+        Note:
+            - The pattern must include all required fields of the model
+            - Nested fields with parse patterns are automatically parsed
+            - Use different delimiters for model-level vs field-level patterns to avoid conflicts
         """
         if pattern is None:
             # Get _model_parse_pattern - Pydantic wraps it in ModelPrivateAttr
@@ -763,16 +1063,26 @@ class JsonParsableModel(ParsableModel):
     """
     A ParsableModel that automatically parses JSON strings when instantiated.
 
-    This class extends ParsableModel to automatically handle JSON string inputs.
-    Use `model_validate()`, `model_validate_json()`, or `from_json()` to parse JSON strings.
+    JsonParsableModel extends ParsableModel to automatically detect and parse JSON
+    strings at the model level. This is particularly useful for API integrations,
+    message queues, or any scenario where you receive JSON strings as input.
+
+    Key Features:
+        - Automatic JSON detection and parsing
+        - Fast path optimization (only attempts JSON parsing for strings starting with '{')
+        - Works seamlessly with field-level parse patterns
+        - Supports all standard Pydantic validation features
 
     Example:
+        ```python
+        from stringent import JsonParsableModel
+
         class User(JsonParsableModel):
             name: str
             age: int
             email: str
 
-        # Works with kwargs
+        # Works with kwargs (normal Pydantic behavior)
         user1 = User(name="Alice", age=30, email="alice@example.com")
 
         # Works with JSON string - automatically parsed!
@@ -787,6 +1097,17 @@ class JsonParsableModel(ParsableModel):
 
         # Or use the explicit from_json() method
         user5 = User.from_json(json_str)
+        ```
+
+    Note:
+        - Only JSON objects are supported (not arrays, primitives, etc.)
+        - JSON parsing is attempted for strings starting with '{'
+        - Field-level parse patterns still work for nested fields
+        - Invalid JSON will raise ValidationError
+
+    See Also:
+        - `ParsableModel`: Base class with field-level parsing
+        - `parse_json()`: For field-level JSON parsing patterns
     """
 
     @model_validator(mode="before")
@@ -795,12 +1116,24 @@ class JsonParsableModel(ParsableModel):
         """
         Automatically parse JSON strings if the input is a string.
 
-        This validator runs before the parent class's _parse_string_fields validator,
+        This validator runs before the parent class's `_parse_string_fields` validator,
         so it handles JSON strings at the model level, while the parent handles
         field-level parsing.
 
         Uses a fast path check (starts with '{') to avoid unnecessary JSON parsing
-        for clearly non-JSON strings.
+        for clearly non-JSON strings. This optimization improves performance for
+        non-JSON inputs.
+
+        Args:
+            data: Input data (string, dict, or other)
+
+        Returns:
+            Parsed dictionary if input was a JSON string, otherwise returns data as-is.
+
+        Note:
+            - Only attempts JSON parsing for strings starting with '{'
+            - Only JSON objects are supported (not arrays or primitives)
+            - Invalid JSON will raise ValidationError during Pydantic validation
         """
         # Fast path: only attempt JSON parsing if string looks like JSON object
         if isinstance(data, str):
@@ -827,23 +1160,39 @@ class JsonParsableModel(ParsableModel):
         Parse a JSON string into a model instance.
 
         This is a convenience method that explicitly indicates JSON parsing intent.
-        It's equivalent to `model_validate(json_str)` but makes the intent clearer.
+        It's equivalent to `model_validate(json_str)` but makes the intent clearer
+        and more readable in code.
 
         Args:
-            json_str: JSON string to parse
+            json_str: JSON string to parse. Must be a valid JSON object.
 
         Returns:
-            Instance of the model class
+            Instance of the model class with all fields parsed and validated.
 
         Raises:
-            ValidationError: If the string is not valid JSON or doesn't match the model schema
+            ValidationError: If the string is not valid JSON, is not a JSON object,
+                           or doesn't match the model schema.
 
         Example:
+            ```python
             class User(JsonParsableModel):
                 name: str
                 age: int
+                email: str
 
-            json_str = '{"name": "Alice", "age": 30}'
+            json_str = '{"name": "Alice", "age": 30, "email": "alice@example.com"}'
             user = User.from_json(json_str)
+            print(user.name)   # "Alice"
+            print(user.age)    # 30
+            ```
+
+        Note:
+            - This method is equivalent to `model_validate(json_str)`
+            - Use this method when you want to make JSON parsing intent explicit
+            - Field-level parse patterns are automatically applied to nested fields
+
+        See Also:
+            - `model_validate()`: Generic validation method
+            - `model_validate_json()`: Pydantic's JSON validation method
         """
         return cls.model_validate(json_str)

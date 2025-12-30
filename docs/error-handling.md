@@ -1,6 +1,6 @@
 # Error Handling Guide
 
-This guide covers error handling and recovery modes in `stringent`, including partial parsing and error collection.
+This comprehensive guide covers error handling and recovery modes in `stringent`. Learn how to gracefully handle parsing errors, collect partial results, and provide better user feedback when validation fails.
 
 ## Overview
 
