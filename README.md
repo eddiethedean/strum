@@ -55,7 +55,7 @@ record = Record(id=1, info="Alice | 30 | NYC")
 print(record.info.name)  # "Alice"
 ```
 
-See the [Getting Started guide](https://stringent.readthedocs.io/en/latest/getting-started.html) for more examples and detailed usage.
+See the [Getting Started guide](https://py-stringent.readthedocs.io/en/latest/getting-started.html) for more examples and detailed usage.
 
 ## Why stringent?
 
@@ -70,23 +70,23 @@ Working with mixed data formats is a common challenge. You might receive diction
 - **Log Processing** - Parse structured log entries into validated models
 - **ETL Pipelines** - Transform unstructured strings into typed data structures
 
-See [use cases and examples](https://stringent.readthedocs.io/en/latest/getting-started.html#common-use-cases) in the documentation.
+See [use cases and examples](https://py-stringent.readthedocs.io/en/latest/getting-started.html#common-use-cases) in the documentation.
 
 ## Documentation
 
-📚 **Full documentation: [stringent.readthedocs.io](https://stringent.readthedocs.io/)**
+📚 **Full documentation: [py-stringent.readthedocs.io](https://py-stringent.readthedocs.io/)**
 
 Comprehensive guides, examples, and API reference are available in the documentation:
 
-- **[Getting Started](https://stringent.readthedocs.io/en/latest/getting-started.html)** - Installation and quick start
-- **[Basic Usage](https://stringent.readthedocs.io/en/latest/basic-usage.html)** - Field-level parsing and pattern chaining
-- **[JSON Parsing](https://stringent.readthedocs.io/en/latest/json-parsing.html)** - Automatic JSON parsing
-- **[Regex Parsing](https://stringent.readthedocs.io/en/latest/regex-parsing.html)** - Regular expression patterns
-- **[Error Handling](https://stringent.readthedocs.io/en/latest/error-handling.html)** - Error recovery and partial parsing
-- **[Advanced Patterns](https://stringent.readthedocs.io/en/latest/advanced-patterns.html)** - Union types and inheritance
-- **[FastAPI Integration](https://stringent.readthedocs.io/en/latest/fastapi-integration.html)** - Using with FastAPI
-- **[User Guides](https://stringent.readthedocs.io/en/latest/user-guides/)** - Migration, best practices, troubleshooting
-- **[API Reference](https://stringent.readthedocs.io/en/latest/api-reference.html)** - Complete API documentation
+- **[Getting Started](https://py-stringent.readthedocs.io/en/latest/getting-started.html)** - Installation and quick start
+- **[Basic Usage](https://py-stringent.readthedocs.io/en/latest/basic-usage.html)** - Field-level parsing and pattern chaining
+- **[JSON Parsing](https://py-stringent.readthedocs.io/en/latest/json-parsing.html)** - Automatic JSON parsing
+- **[Regex Parsing](https://py-stringent.readthedocs.io/en/latest/regex-parsing.html)** - Regular expression patterns
+- **[Error Handling](https://py-stringent.readthedocs.io/en/latest/error-handling.html)** - Error recovery and partial parsing
+- **[Advanced Patterns](https://py-stringent.readthedocs.io/en/latest/advanced-patterns.html)** - Union types and inheritance
+- **[FastAPI Integration](https://py-stringent.readthedocs.io/en/latest/fastapi-integration.html)** - Using with FastAPI
+- **[User Guides](https://py-stringent.readthedocs.io/en/latest/user-guides/)** - Migration, best practices, troubleshooting
+- **[API Reference](https://py-stringent.readthedocs.io/en/latest/api-reference.html)** - Complete API documentation
 
 ## Requirements
 
@@ -101,13 +101,13 @@ Comprehensive guides, examples, and API reference are available in the documenta
 
 ## More Examples
 
-For detailed examples and use cases, see the [documentation](https://stringent.readthedocs.io/):
+For detailed examples and use cases, see the [documentation](https://py-stringent.readthedocs.io/):
 
-- **[Pattern Chaining](https://stringent.readthedocs.io/en/latest/basic-usage.html#pattern-chaining)** - Try multiple patterns in order
-- **[JSON Parsing](https://stringent.readthedocs.io/en/latest/json-parsing.html)** - Automatic JSON with fallback patterns
-- **[Union Types](https://stringent.readthedocs.io/en/latest/advanced-patterns.html#union-types)** - Organize parsing strategies
-- **[Regex Patterns](https://stringent.readthedocs.io/en/latest/regex-parsing.html)** - Parse with regular expressions
-- **[Error Recovery](https://stringent.readthedocs.io/en/latest/error-handling.html)** - Graceful error handling
+- **[Pattern Chaining](https://py-stringent.readthedocs.io/en/latest/basic-usage.html#pattern-chaining)** - Try multiple patterns in order
+- **[JSON Parsing](https://py-stringent.readthedocs.io/en/latest/json-parsing.html)** - Automatic JSON with fallback patterns
+- **[Union Types](https://py-stringent.readthedocs.io/en/latest/advanced-patterns.html#union-types)** - Organize parsing strategies
+- **[Regex Patterns](https://py-stringent.readthedocs.io/en/latest/regex-parsing.html)** - Parse with regular expressions
+- **[Error Recovery](https://py-stringent.readthedocs.io/en/latest/error-handling.html)** - Graceful error handling
 
 ## Contributing
 

@@ -40,7 +40,7 @@ Example:
     print(record.info.name)  # "Alice"
     ```
 
-For more information, see the documentation at https://stringent.readthedocs.io/
+For more information, see the documentation at https://py-stringent.readthedocs.io/
 """
 
 from stringent.parser import (

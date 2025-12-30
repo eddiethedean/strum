@@ -1,6 +1,6 @@
 site_name: stringent
 site_description: Parse strings into Pydantic models using pattern matching
-site_url: https://stringent.readthedocs.io/
+site_url: https://py-stringent.readthedocs.io/
 repo_url: https://github.com/eddiethedean/stringent
 repo_name: eddiethedean/stringent
 edit_uri: edit/main/docs/
